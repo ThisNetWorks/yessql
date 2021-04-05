@@ -13,13 +13,11 @@ namespace YesSql.Core.QueryParser
         }
 
         public string Name { get; }
-        public bool OneOrMany { get; }
+        public bool Single { get; }
 
-        public TermQueryOption<T> TermQueryOption { get; internal set; }
+        public abstract TermOption<T> TermOption { get; }
 
-
-        public Parser<TermNode> Parser { get; internal set; }
-        public Parser<char> SeperatorParser { get; internal set; }
+        public abstract Parser<TermNode> Parser { get; }
     }
 
     // Options here for One, or Many
@@ -30,7 +28,7 @@ namespace YesSql.Core.QueryParser
         {
             var operatorParser = operatorParserBuilder.Parser;
 
-            SeperatorParser = Terms.Text(name, caseInsensitive: true)
+            var SeperatorParser = Terms.Text(name, caseInsensitive: true)
                 .SkipAnd(Literals.Char(':'));
 
             var parser = Terms.Text(name, caseInsensitive: true)
@@ -40,8 +38,12 @@ namespace YesSql.Core.QueryParser
 
             Parser = parser;
 
-            TermQueryOption = operatorParserBuilder.TermQueryOption;
+            TermOption = operatorParserBuilder.TermOption;
         }
+
+        public override TermOption<T> TermOption { get; }
+
+        public override Parser<TermNode> Parser { get; }
     }
 
     public class DefaultTermParserBuilder<T> : TermParserBuilder<T> where T : class
@@ -50,7 +52,7 @@ namespace YesSql.Core.QueryParser
         {
             var operatorParser = operatorParserBuilder.Parser;
 
-            SeperatorParser = Terms.Text(name, caseInsensitive: true).SkipAnd(Literals.Char(':'))
+            var SeperatorParser = Terms.Text(name, caseInsensitive: true).SkipAnd(Literals.Char(':'))
                 .Or(
                     Literals.Char(' ').AndSkip(Literals.WhiteSpace()) // a default term is also seperated by a space
                 );
@@ -66,7 +68,11 @@ namespace YesSql.Core.QueryParser
 
             Parser = parser;
 
-            TermQueryOption = operatorParserBuilder.TermQueryOption;
+            TermOption = operatorParserBuilder.TermOption;
         }
+        
+        public override TermOption<T> TermOption { get; }
+
+        public override Parser<TermNode> Parser { get; }
     }
 }

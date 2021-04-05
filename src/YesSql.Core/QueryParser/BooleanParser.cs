@@ -111,18 +111,18 @@ namespace YesSql.Core.QueryParser
         {
             Func<string, IQuery<T>, QueryExecutionContext<T>, ValueTask<IQuery<T>>> valueMatch = (q, val, ctx) => new ValueTask<IQuery<T>>(matchQuery(q, val));
             Func<string, IQuery<T>, QueryExecutionContext<T>, ValueTask<IQuery<T>>> valueNotMatch = (q, val, ctx) => new ValueTask<IQuery<T>>(notMatchQuery(q, val));
-            TermQueryOption = new TermQueryOption<T>(valueMatch, valueNotMatch);
+            TermOption = new TermOption<T>(new TermQueryOption<T>(valueMatch, valueNotMatch), single: true);
         }
 
         public BooleanParserBuilder(
             Func<string, IQuery<T>, QueryExecutionContext<T>, ValueTask<IQuery<T>>> matchQuery,
             Func<string, IQuery<T>, QueryExecutionContext<T>, ValueTask<IQuery<T>>> notMatchQuery) : this()
         {
-            TermQueryOption = new TermQueryOption<T>(matchQuery, notMatchQuery);
+            TermOption = new TermOption<T>(new TermQueryOption<T>(matchQuery, notMatchQuery), single: true);
         }
 
         public override Parser<OperatorNode> Parser { get; }
 
-        public override TermQueryOption<T> TermQueryOption { get; }
+        public override TermOption<T> TermOption { get; }
     }
 }

@@ -12,22 +12,30 @@ namespace YesSql.Core.QueryParser
         public abstract string ToNormalizedString();
     }
 
-    public abstract class TermNode : QueryNode 
+    public abstract class TermNode : QueryNode
     {
-        public TermNode(string termName, OperatorNode operation)
+        public TermNode(string termName)
         {
             TermName = termName;
-            Operation = operation;
         }
 
         public string TermName { get; }
+    }
+
+    public abstract class TermOperationNode : TermNode
+    {
+        public TermOperationNode(string termName, OperatorNode operation) : base(termName)
+        {
+            Operation = operation;
+        }
+
         public OperatorNode Operation { get; }
 
         public override Func<IQuery<Tq>, ValueTask<IQuery<Tq>>> BuildAsync<Tq>(QueryExecutionContext<Tq> context)
-            => Operation.BuildAsync(context);            
+            => Operation.BuildAsync(context);
     }
 
-    public class NamedTermNode : TermNode 
+    public class NamedTermNode : TermOperationNode
     {
         public NamedTermNode(string termName, OperatorNode operation) : base(termName, operation)
         {
@@ -41,7 +49,7 @@ namespace YesSql.Core.QueryParser
     }
 
 
-    public class DefaultTermNode : TermNode
+    public class DefaultTermNode : TermOperationNode
     {
         public DefaultTermNode(string termName, OperatorNode operation) : base(termName, operation)
         {
@@ -52,5 +60,49 @@ namespace YesSql.Core.QueryParser
 
         public override string ToString()
             => $"{Operation.ToString()}";
+    }
+
+    public abstract class CompoundTermNode : TermNode
+    {
+        public CompoundTermNode(string termName) : base(termName)
+        {
+        }
+
+        public List<TermOperationNode> Children { get; } = new();
+    }
+
+    public class AndTermNode : CompoundTermNode
+    {
+        public AndTermNode(TermOperationNode existingTerm, TermOperationNode newTerm) : base(existingTerm.TermName)
+        {
+            Children.Add(existingTerm);
+            Children.Add(newTerm);
+        }
+
+        // TODO this works, but really need to test it against taxonomies to see if the logic is correct.
+        public override Func<IQuery<Tq>, ValueTask<IQuery<Tq>>> BuildAsync<Tq>(QueryExecutionContext<Tq> context)
+        {
+            var predicates = new List<Func<IQuery<Tq>, Task<IQuery<Tq>>>>();
+            foreach (var child in Children)
+            {
+                // Func<IQuery<Tq>, Task<IQuery<Tq>>> c = (q) => child.Operation.BuildAsync(context)(q).AsTask();
+
+                Func<IQuery<Tq>, Task<IQuery<Tq>>> predicate = (q) => context.Query.AllAsync(
+                    (q) => child.Operation.BuildAsync(context)(q).AsTask()
+                );
+                predicates.Add(predicate);
+
+            }
+
+            Func<IQuery<Tq>, Task<IQuery<Tq>>> result = (Func<IQuery<Tq>, Task<IQuery<Tq>>>)Delegate.Combine(predicates.ToArray());
+
+            return xyz => new ValueTask<IQuery<Tq>>(result(context.Query));
+        }
+
+        public override string ToNormalizedString()
+            => string.Join(" ", Children.Select(c => c.ToNormalizedString()));
+
+        public override string ToString()
+            => string.Join(" ", Children.Select(c => c.ToString()));
     }
 }

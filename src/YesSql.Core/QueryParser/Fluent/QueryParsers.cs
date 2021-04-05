@@ -14,11 +14,11 @@ namespace YesSql.Core.QueryParser.Fluent
         public static DefaultTermParserBuilder<T> DefaultTermParser<T>(string name, OperatorParserBuilder<T> operatorParser) where T : class
             => new DefaultTermParserBuilder<T>(name, operatorParser);
 
-        public static UnaryParserBuilder<T> OneConditionParser<T>(Func<string, IQuery<T>, IQuery<T>> query) where T : class
-            => new UnaryParserBuilder<T>(query);
+        public static UnaryParserBuilder<T> OneConditionParser<T>(Func<string, IQuery<T>, IQuery<T>> query, bool single = true) where T : class
+            => new UnaryParserBuilder<T>(query, single);
 
-        public static UnaryParserBuilder<T> OneConditionParser<T>(Func<string, IQuery<T>, QueryExecutionContext<T>, ValueTask<IQuery<T>>> query) where T : class
-            => new UnaryParserBuilder<T>(query);            
+        public static UnaryParserBuilder<T> OneConditionParser<T>(Func<string, IQuery<T>, QueryExecutionContext<T>, ValueTask<IQuery<T>>> query, bool single = true) where T : class
+            => new UnaryParserBuilder<T>(query, single);            
 
         public static BooleanParserBuilder<T> ManyConditionParser<T>(Func<string, IQuery<T>, IQuery<T>> matchQuery, Func<string, IQuery<T>, IQuery<T>> notMatchQuery) where T : class
             => new BooleanParserBuilder<T>(matchQuery, notMatchQuery);

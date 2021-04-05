@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -13,24 +14,25 @@ namespace YesSql.Core.QueryParser
 
     public class TermOption<T> where T : class
     {
-        public TermOption(bool oneOrMany, TermQueryOption<T> query)
+        public TermOption(TermQueryOption<T> query, bool single = true)
         {
-            OneOrMany = oneOrMany;
             Query = query;
+            Single = single;
         }
 
         /// <summary>
         /// Whether one or many of the specified term is allowed.
         /// </summary>
-        public bool OneOrMany { get; }
+        public bool Single { get; }
 
         public TermQueryOption<T> Query { get; }
     }
 
     // This could be SearchScope
-    public class TermList<T> where T : class
+    public class TermList<T> : IEnumerable<TermNode> where T : class
     {
         private Dictionary<string, TermOption<T>> _termOptions = new();
+        private Dictionary<string, TermNode> _terms = new();
 
 
         public TermList()
@@ -42,6 +44,49 @@ namespace YesSql.Core.QueryParser
         {
             Terms = terms;
             _termOptions = termOptions;
+
+            foreach (var term in terms)
+            {
+                TryAddOrReplace(term);
+            }
+        }
+
+        public bool TryAddOrReplace(TermNode term)
+        {
+            // Check the term options 
+            if (!_termOptions.TryGetValue(term.TermName, out var termOption))
+            {
+                return false;
+            }
+
+            if (_terms.TryGetValue(term.TermName, out var existingTerm))
+            {
+                if (termOption.Single)
+                {
+                    // Replace
+                    _terms[term.TermName] = term;
+                    return true;
+                }
+
+                // Add
+                if (existingTerm is CompoundTermNode compound)
+                {
+                    compound.Children.Add(term as TermOperationNode);
+                }
+                else
+                {
+                    // this isn't going to work when removing from list, 
+                    // i.e. search says tax:a tax:b but model says just tax:b
+                    // for that we need a Merge extension.
+                    var newCompound = new AndTermNode(existingTerm as TermOperationNode, term as TermOperationNode);
+                    _terms[term.TermName] = newCompound;
+                    return true;
+                }
+            }
+
+            _terms[term.TermName] = term;
+
+            return true;
         }
 
         public List<TermNode> Terms { get; }
@@ -54,7 +99,7 @@ namespace YesSql.Core.QueryParser
         {
             var context = new QueryExecutionContext<T>(query, serviceProvider);
 
-            foreach (var term in Terms)
+            foreach (var term in _terms.Values)
             {
                 // TODO optimize value task later.
 
@@ -67,13 +112,20 @@ namespace YesSql.Core.QueryParser
             }
 
             return query;
-        }        
+        }
+
 
         public string ToNormalizedString()
-            => $"{String.Join(" ", Terms.Select(s => s.ToNormalizedString()))}";
+            => $"{String.Join(" ", _terms.Values.Select(s => s.ToNormalizedString()))}";
 
         public override string ToString()
-            => $"{String.Join(" ", Terms.Select(s => s.ToString()))}";
+            => $"{String.Join(" ", _terms.Values.Select(s => s.ToString()))}";
+
+        public IEnumerator<TermNode> GetEnumerator()
+            => _terms.Values.GetEnumerator();
+
+        IEnumerator IEnumerable.GetEnumerator()
+            => _terms.Values.GetEnumerator();
     }
 
     public class QueryExecutionContext<T> where T : class // struct?

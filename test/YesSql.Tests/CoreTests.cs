@@ -6008,7 +6008,7 @@ namespace YesSql.Tests
                 Assert.Equal("Post by steve about cats", (await searchQuery.FirstOrDefaultAsync()).Title);
                 Assert.Equal(1, await searchQuery.CountAsync());
             }
-        }  
+        }
 
         // Duplicate of above.
         [Fact]
@@ -6225,6 +6225,64 @@ namespace YesSql.Tests
                 Assert.Equal(1, await searchQuery.CountAsync());
             }
         }  
+
+       [Fact]
+        public async Task ShouldParseTwoNamedTermQuery()
+        {
+            // TODO works. not sure the logic is good. needs testing against taxonomies.
+            _store.RegisterIndexes<ArticleBydPublishedDateProvider>();
+
+            using (var session = _store.CreateSession())
+            {
+                var billsArticle = new Article
+                {
+                    Title = "Article by bill about rabbits"
+                };
+
+                var stevesArticle = new Article
+                {
+                    Title = "Article by steve about cats"
+                };  
+
+                session.Save(billsArticle);
+                session.Save(stevesArticle);
+
+                await session.SaveChangesAsync();
+            }
+
+            using (var session = _store.CreateSession())
+            {
+                var search = "title:Article title:Article";
+                var searchQuery = session.Query<Article>();
+
+                var parser = QueryParser(
+                    NamedTermParser("title",
+                        OneConditionParser<Article>(
+                            (val ,query) => query.With<ArticleByPublishedDate>(x => x.Title.Contains(val)),
+                            single: false
+                        )
+                    )
+                );
+
+                var parsed = parser.Parse(search);
+
+                await parsed.ExecuteQueryAsync(searchQuery, null);
+
+                var yesqlQuery = session.Query().For<Article>()
+                    .All(
+                        x => x.With<ArticleByPublishedDate>(x => x.Title.Contains("Article"))
+                    )
+                    .All(
+                        x => x.With<ArticleByPublishedDate>(x => x.Title.Contains("Article"))
+                    );
+
+                // Normal yesql query
+                Assert.Equal(2, await yesqlQuery.CountAsync());
+
+                // Built query.
+                Assert.Equal(2, await searchQuery.CountAsync());
+            }
+        }          
 
         [Fact]
         public async Task ShouldParseComplexQuery()

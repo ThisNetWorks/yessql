@@ -14,37 +14,22 @@ namespace YesSql.Core.QueryParser
 
     public class QueryParser<T> : IQueryParser<T> where T : class
     {
-        private static Parser<List<V>> _customSeparated<U, V>(Parser<U> separator, Parser<V> parser) => new CustomSeparated<U, V>(separator, parser);
-
         public QueryParser(params TermParserBuilder<T>[] parsers)
         {
-            var builtParsers = new List<Parser<TermNode>>();
+            TermOptions = parsers.ToDictionary(k => k.Name, v => v.TermOption);
 
-            foreach(var p in parsers)
-            {
-                var termOption = new TermOption<T>(p.OneOrMany, p.TermQueryOption);
-                TermOptions[p.Name] = termOption;
-                builtParsers.Add(p.Parser);
-            }
+            var Terms = OneOf(parsers.Select(x => x.Parser).ToArray());
 
-            var Terms = OneOf(builtParsers.ToArray());
-
-            var Seperator = OneOf(parsers.Select(x => x.SeperatorParser).ToArray());
-
-            // TODO this should be able to move to ZeroOrMany now.
-
-            Parser = _customSeparated(
-                Seperator,
-                Terms)
+            Parser = ZeroOrMany(Terms)
                     .Then(static (context, terms) => 
                     {
                         var ctx = (QueryParseContext<T>)context;
 
                         return new TermList<T>(terms, ctx.TermOptions);
-                    });
+                    });                    
         }
 
-        public Dictionary<string, TermOption<T>> TermOptions { get; } = new();
+        public Dictionary<string, TermOption<T>> TermOptions { get; }
 
         protected Parser<TermList<T>> Parser { get; }
 
