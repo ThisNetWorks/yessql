@@ -9,6 +9,7 @@
         <PackageReference Include="Dapper.StrongName" Version="2.0.78" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
         <PackageReference Include="System.Collections.Immutable" Version="5.0.0" />
+        <PackageReference Include="Parlot" Version="0.0.10" />
     </ItemGroup>
     <ItemGroup>
         <!-- Latest minimum LTS version. We don't want to force a higher version to applications -->

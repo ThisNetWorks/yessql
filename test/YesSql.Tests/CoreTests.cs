@@ -17,6 +17,7 @@ using YesSql.Tests.Commands;
 using YesSql.Tests.CompiledQueries;
 using YesSql.Tests.Indexes;
 using YesSql.Tests.Models;
+using static YesSql.Core.QueryParser.Fluent.QueryParsers;
 
 namespace YesSql.Tests
 {
@@ -5959,5 +5960,601 @@ namespace YesSql.Tests
                 }              
             }
         }
+
+        [Fact]
+        public async Task ShouldParseNamedTermQuery()
+        {
+            _store.RegisterIndexes<ArticleBydPublishedDateProvider>();
+
+            using (var session = _store.CreateSession())
+            {
+                var billsArticle = new Article
+                {
+                    Title = "Article by bill about rabbits"
+                };
+
+                var stevesArticle = new Article
+                {
+                    Title = "Post by steve about cats"
+                };
+
+                session.Save(billsArticle);
+                session.Save(stevesArticle);
+
+                await session.SaveChangesAsync();
+            }
+
+            using (var session = _store.CreateSession())
+            {
+                var search = "title:steve";
+
+                var searchQuery = session.Query<Article>();
+
+                var parser = QueryParser(
+                    NamedTermParser("title",
+                        OneConditionParser<Article>((val, query) => query.With<ArticleByPublishedDate>(x => x.Title.Contains(val)))
+                    )
+                );
+
+                var parsed = parser.Parse(search);
+
+                await parsed.ExecuteQueryAsync(searchQuery, null);
+
+                // Normal yesql query
+                Assert.Equal("Post by steve about cats", (await session.Query().For<Article>().With<ArticleByPublishedDate>(x => x.Title.Contains("Steve")).FirstOrDefaultAsync()).Title);
+                Assert.Equal(1, await session.Query().For<Article>().With<ArticleByPublishedDate>(x => x.Title.Contains("Steve")).CountAsync());
+
+                // Built query.
+                Assert.Equal("Post by steve about cats", (await searchQuery.FirstOrDefaultAsync()).Title);
+                Assert.Equal(1, await searchQuery.CountAsync());
+            }
+        }  
+
+        // Duplicate of above.
+        [Fact]
+        public async Task ShouldParseAsyncNamedTermQuery()
+        {
+            _store.RegisterIndexes<ArticleBydPublishedDateProvider>();
+
+            using (var session = _store.CreateSession())
+            {
+                var billsArticle = new Article
+                {
+                    Title = "Article by bill about rabbits"
+                };
+
+                var stevesArticle = new Article
+                {
+                    Title = "Post by steve about cats"
+                };
+
+                session.Save(billsArticle);
+                session.Save(stevesArticle);
+
+                await session.SaveChangesAsync();
+            }
+
+            using (var session = _store.CreateSession())
+            {
+                var search = "title:steve";
+
+                var searchQuery = session.Query<Article>();
+
+                var parser = QueryParser(
+                    NamedTermParser("title",
+                        OneConditionParser<Article>(async (val, query, ctx) => 
+                        {
+                            await Task.Delay(1);
+                            // return Task.FromResult<IQuery<Article>>(query.With<ArticleByPublishedDate>(x => x.Title.Contains(val)));
+                            return query.With<ArticleByPublishedDate>(x => x.Title.Contains(val));
+                        })
+                    )
+                );
+
+                var parsed = parser.Parse(search);
+
+                await parsed.ExecuteQueryAsync(searchQuery, null);
+
+                // Normal yesql query
+                Assert.Equal("Post by steve about cats", (await session.Query().For<Article>().With<ArticleByPublishedDate>(x => x.Title.Contains("Steve")).FirstOrDefaultAsync()).Title);
+                Assert.Equal(1, await session.Query().For<Article>().With<ArticleByPublishedDate>(x => x.Title.Contains("Steve")).CountAsync());
+
+                // Built query.
+                Assert.Equal("Post by steve about cats", (await searchQuery.FirstOrDefaultAsync()).Title);
+                Assert.Equal(1, await searchQuery.CountAsync());
+            }
+        }  
+
+        [Theory]
+        [InlineData("steve")]
+        [InlineData("title:steve")]
+        public async Task ShouldParseDefaultTermQuery(string search)
+        {
+            _store.RegisterIndexes<ArticleBydPublishedDateProvider>();
+
+            using (var session = _store.CreateSession())
+            {
+                var billsArticle = new Article
+                {
+                    Title = "Article by bill about rabbits"
+                };
+
+                var stevesArticle = new Article
+                {
+                    Title = "Post by steve about cats"
+                };
+
+                session.Save(billsArticle);
+                session.Save(stevesArticle);
+
+                await session.SaveChangesAsync();
+            }
+
+            using (var session = _store.CreateSession())
+            {
+                var searchQuery = session.Query<Article>();
+
+                var parser = QueryParser(
+                    DefaultTermParser("title",
+                        OneConditionParser<Article>((val, query) => query.With<ArticleByPublishedDate>(x => x.Title.Contains(val)))
+                    )
+                );
+
+                var parsed = parser.Parse(search);
+
+                await parsed.ExecuteQueryAsync(searchQuery, null);
+
+                // Normal yesql query
+                Assert.Equal("Post by steve about cats", (await session.Query().For<Article>().With<ArticleByPublishedDate>(x => x.Title.Contains("Steve")).FirstOrDefaultAsync()).Title);
+                Assert.Equal(1, await session.Query().For<Article>().With<ArticleByPublishedDate>(x => x.Title.Contains("Steve")).CountAsync());
+
+                // Built query.
+                Assert.Equal("Post by steve about cats", (await searchQuery.FirstOrDefaultAsync()).Title);
+                Assert.Equal(1, await searchQuery.CountAsync());
+            }
+        }          
+
+        
+        [Fact]
+        public async Task ShouldParseOrQuery()
+        {
+            _store.RegisterIndexes<ArticleBydPublishedDateProvider>();
+
+            using (var session = _store.CreateSession())
+            {
+                var billsArticle = new Article
+                {
+                    Title = "Article by bill about rabbits"
+                };
+
+                var stevesArticle = new Article
+                {
+                    Title = "Post by steve about cats"
+                };
+
+                session.Save(billsArticle);
+                session.Save(stevesArticle);
+
+                await session.SaveChangesAsync();
+            }
+
+            using (var session = _store.CreateSession())
+            {
+                // boolean OR "title:(bill OR post)"
+                var search = "title:bill post";
+                var searchQuery = session.Query<Article>();
+
+                var parser = QueryParser(
+                    NamedTermParser("title",
+                        ManyConditionParser<Article>(
+                            (val, query) => query.With<ArticleByPublishedDate>(x => x.Title.Contains(val)),
+                            (val, query) => query.With<ArticleByPublishedDate>(x => x.Title.IsNotIn<ArticleByPublishedDate>(s => s.Title, w => w.Title.Contains(val)))
+                        )
+                    )
+                );
+
+                var parsed = parser.Parse(search);
+                await parsed.ExecuteQueryAsync(searchQuery, null);
+
+                var yesqlQuery = session.Query().For<Article>()
+                    .Any(
+                        x => x.With<ArticleByPublishedDate>(x => x.Title.Contains("bill")),
+                        x => x.With<ArticleByPublishedDate>(x => x.Title.Contains("post"))
+                    );
+
+                // Normal yesql query
+                Assert.Equal(2, await yesqlQuery.CountAsync());
+
+                // Built query.
+                Assert.Equal(2, await searchQuery.CountAsync());
+            }
+        } 
+
+        [Fact]
+        public async Task ShouldParseAndQuery()
+        {
+            _store.RegisterIndexes<ArticleBydPublishedDateProvider>();
+
+            using (var session = _store.CreateSession())
+            {
+                var billsArticle = new Article
+                {
+                    Title = "Article by bill about rabbits"
+                };
+
+                var stevesArticle = new Article
+                {
+                    Title = "Post by steve about cats"
+                };  
+
+                session.Save(billsArticle);
+                session.Save(stevesArticle);
+
+                await session.SaveChangesAsync();
+            }
+
+            using (var session = _store.CreateSession())
+            {
+                // boolean AND "title:(bill AND rabbits)"
+                var search = "title:bill AND rabbits";
+                var searchQuery = session.Query<Article>();
+
+                var parser = QueryParser(
+                    NamedTermParser("title",
+                        ManyConditionParser<Article>(
+                            (val ,query) => query.With<ArticleByPublishedDate>(x => x.Title.Contains(val)),
+                            (val, query) => query.With<ArticleByPublishedDate>(x => x.Title.IsNotIn<ArticleByPublishedDate>(s => s.Title, w => w.Title.Contains(val))) 
+                        )
+                    )
+                );
+
+                var parsed = parser.Parse(search);
+
+                await parsed.ExecuteQueryAsync(searchQuery, null);
+
+                var yesqlQuery = session.Query().For<Article>()
+                    .All(
+                        x => x.With<ArticleByPublishedDate>(x => x.Title.Contains("bill")),
+                        x => x.With<ArticleByPublishedDate>(x => x.Title.Contains("rabbits"))
+                    );
+
+                // Normal yesql query
+                Assert.Equal(1, await yesqlQuery.CountAsync());
+
+                // Built query.
+                Assert.Equal(1, await searchQuery.CountAsync());
+            }
+        }  
+
+        [Fact]
+        public async Task ShouldParseComplexQuery()
+        {
+            _store.RegisterIndexes<ArticleBydPublishedDateProvider>();
+
+            using (var session = _store.CreateSession())
+            {
+                var beachLizardsArticle = new Article
+                {
+                    Title = "On the beach in the sand we found lizards"
+                };
+
+                var mountainArticle = new Article
+                {
+                    Title = "On the mountain it snowed at the lake"
+                };                  
+
+                session.Save(beachLizardsArticle);
+                session.Save(mountainArticle);
+
+                await session.SaveChangesAsync();
+            }
+
+            using (var session = _store.CreateSession())
+            {
+                var search = "title:(beach AND sand) OR (mountain AND lake)";
+                var searchQuery = session.Query<Article>();
+   
+                var parser = QueryParser(
+                    NamedTermParser("title",
+                        ManyConditionParser<Article>(
+                            (val, query) => query.With<ArticleByPublishedDate>(x => x.Title.Contains(val)),
+                            (val, query) => query.With<ArticleByPublishedDate>(x => x.Title.IsNotIn<ArticleByPublishedDate>(s => s.Title, w => w.Title.Contains(val)))  
+                        )
+                    )
+                );
+
+                var parsed = parser.Parse(search);
+
+                await parsed.ExecuteQueryAsync(searchQuery, null);               
+
+                var yesqlQuery = session.Query().For<Article>()
+                // this top one is a combind node where left is Or and Right is And
+                    .Any(
+                        x => x.All(
+                            x => x.With<ArticleByPublishedDate>(x => x.Title.Contains("beach")),
+                            x => x.With<ArticleByPublishedDate>(x => x.Title.Contains("sand"))
+                        ),
+                        x => x.All(
+                            x => x.With<ArticleByPublishedDate>(x => x.Title.Contains("mountain")),
+                            x => x.With<ArticleByPublishedDate>(x => x.Title.Contains("lake"))
+                        )
+                    );
+
+                // Normal yesql query
+                Assert.Equal(2, await yesqlQuery.CountAsync());
+
+                // Built query.
+                Assert.Equal(2, await searchQuery.CountAsync());
+            }
+        }  
+
+        [Fact]
+        public async Task ShouldParseNotComplexQuery()
+        {
+            _store.RegisterIndexes<ArticleBydPublishedDateProvider>();
+
+            using (var session = _store.CreateSession())
+            {
+                var beachLizardsArticle = new Article
+                {
+                    Title = "On the beach in the sand we found lizards"
+                };
+
+                var sandcastlesArticle = new Article
+                {
+                    Title = "On the beach in the sand we built sandcastles"
+                }; 
+
+                var mountainArticle = new Article
+                {
+                    Title = "On the mountain it snowed at the lake"
+                };                  
+
+                session.Save(beachLizardsArticle);
+                session.Save(sandcastlesArticle);
+                session.Save(mountainArticle);
+
+                await session.SaveChangesAsync();
+            }
+
+            using (var session = _store.CreateSession())
+            {
+                // boolean : ((beach AND sand) OR (mountain AND lake)) NOT lizards 
+                var search = "title:((beach AND sand) OR (mountain AND lake)) NOT lizards";
+                var searchQuery = session.Query<Article>();
+
+                var parser = QueryParser(
+                    NamedTermParser("title",
+                        ManyConditionParser<Article>(
+                            (val, query) => query.With<ArticleByPublishedDate>(x => x.Title.Contains(val)),
+                            (val, query) => query.With<ArticleByPublishedDate>(x => x.Title.IsNotIn<ArticleByPublishedDate>(s => s.Title, w => w.Title.Contains(val)))    
+                        )
+                    )
+
+                );
+
+                var parsed = parser.Parse(search);
+
+                await parsed.ExecuteQueryAsync(searchQuery, null);               
+
+                var yesqlQuery = session.Query().For<Article>()
+                // this top one is a combind node where left is Or and Right is And
+                    .Any(
+                        x => x.All(
+                            x => x.With<ArticleByPublishedDate>(x => x.Title.Contains("beach")),
+                            x => x.With<ArticleByPublishedDate>(x => x.Title.Contains("sand"))
+                        ),
+                        x => x.All(
+                            x => x.With<ArticleByPublishedDate>(x => x.Title.Contains("mountain")),
+                            x => x.With<ArticleByPublishedDate>(x => x.Title.Contains("lake"))
+                        )
+                    )
+                    .All(
+                        x => x.With<ArticleByPublishedDate>(x => x.Title.IsNotIn<ArticleByPublishedDate>(s => s.Title, w => w.Title.Contains("lizards")))
+                    );
+
+                // Normal yesql query
+                Assert.Equal(2, await yesqlQuery.CountAsync());
+
+                // Built query.
+                Assert.Equal(2, await searchQuery.CountAsync());
+            }
+        }  
+
+        [Fact]
+        public async Task ShouldParseNotBooleanQuery()
+        {
+            _store.RegisterIndexes<ArticleBydPublishedDateProvider>();
+
+            using (var session = _store.CreateSession())
+            {
+                var billsArticle = new Article
+                {
+                    Title = "Article by bill about rabbits"
+                };
+
+                var stevesArticle = new Article
+                {
+                    Title = "Post by steve about cats"
+                };
+
+                var paulsArticle = new Article
+                {
+                    Title = "Blog by paul about chickens"
+                };                
+
+                session.Save(billsArticle);
+                session.Save(stevesArticle);
+                session.Save(paulsArticle);
+
+                await session.SaveChangesAsync();
+            }
+
+            using (var session = _store.CreateSession())
+            {
+                var search = "title:NOT steve";          
+                var searchQuery = session.Query<Article>();
+
+                var parser = QueryParser(
+                    NamedTermParser("title",
+                        ManyConditionParser<Article>(
+                            (val, query) => query.With<ArticleByPublishedDate>(x => x.Title.Contains(val)),
+                            (val, query) => query.With<ArticleByPublishedDate>(x => x.Title.IsNotIn<ArticleByPublishedDate>(s => s.Title, w => w.Title.Contains(val)))    
+                        )
+                    )
+                );
+
+                var parsed = parser.Parse(search);
+
+                await parsed.ExecuteQueryAsync(searchQuery, null);  
+
+                var yesqlQuery = session.Query().For<Article>()
+                    .All(
+                        x => x.With<ArticleByPublishedDate>(x => x.Title.IsNotIn<ArticleByPublishedDate>(s => s.Title, w => w.Title.Contains("steve")))
+                    )
+                    ;
+
+                // Normal yesql query
+                Assert.Equal(2, await yesqlQuery.CountAsync());
+
+                // Built query.
+                Assert.Equal(2, await searchQuery.CountAsync());
+            }
+        }   
+
+        [Fact]
+        public async Task ShouldParseAsyncNotBooleanQuery()
+        {
+            _store.RegisterIndexes<ArticleBydPublishedDateProvider>();
+
+            using (var session = _store.CreateSession())
+            {
+                var billsArticle = new Article
+                {
+                    Title = "Article by bill about rabbits"
+                };
+
+                var stevesArticle = new Article
+                {
+                    Title = "Post by steve about cats"
+                };
+
+                var paulsArticle = new Article
+                {
+                    Title = "Blog by paul about chickens"
+                };                
+
+                session.Save(billsArticle);
+                session.Save(stevesArticle);
+                session.Save(paulsArticle);
+
+                await session.SaveChangesAsync();
+            }
+
+            using (var session = _store.CreateSession())
+            {
+                var search = "title:NOT steve";          
+                var searchQuery = session.Query<Article>();
+
+                var parser = QueryParser(
+                    NamedTermParser("title",
+                        ManyConditionParser<Article>(
+                            (val, query) => query.With<ArticleByPublishedDate>(x => x.Title.Contains(val)),
+                            (val, query) => query.With<ArticleByPublishedDate>(x => x.Title.IsNotIn<ArticleByPublishedDate>(s => s.Title, w => w.Title.Contains(val)))    
+                        )
+                    )
+                );
+
+                var parsed = parser.Parse(search);
+
+                // parsed.Build(searchQuery);  
+
+                searchQuery = await parsed.ExecuteQueryAsync(searchQuery, null);
+
+                var yesqlQuery = session.Query().For<Article>()
+                    .All(
+                        x => x.With<ArticleByPublishedDate>(x => x.Title.IsNotIn<ArticleByPublishedDate>(s => s.Title, w => w.Title.Contains("steve")))
+                    )
+                    ;
+
+                // Normal yesql query
+                Assert.Equal(2, await yesqlQuery.CountAsync());
+
+                // Built query.
+                Assert.Equal(2, await searchQuery.CountAsync());
+            }
+        }   
+
+
+
+        [Fact]
+        public async Task ShouldParseNotQuery()
+        {
+            _store.RegisterIndexes<ArticleBydPublishedDateProvider>();
+
+            using (var session = _store.CreateSession())
+            {
+                var billsArticle = new Article
+                {
+                    Title = "Article by bill about rabbits"
+                };
+
+                var stevesArticle = new Article
+                {
+                    Title = "Post by steve about cats"
+                };
+
+                var paulsArticle = new Article
+                {
+                    Title = "Blog by paul about chickens"
+                };                
+
+                session.Save(billsArticle);
+                session.Save(stevesArticle);
+                session.Save(paulsArticle);
+
+                await session.SaveChangesAsync();
+            }
+
+            using (var session = _store.CreateSession())
+            {
+                var search = "title:about NOT steve";          
+                var searchQuery = session.Query<Article>();
+
+                var parser = QueryParser(
+                    NamedTermParser("title",
+                        ManyConditionParser<Article>(
+                            (val, query) => query.With<ArticleByPublishedDate>(x => x.Title.Contains(val)),
+                            (val, query) => query.With<ArticleByPublishedDate>(x => x.Title.IsNotIn<ArticleByPublishedDate>(s => s.Title, w => w.Title.Contains(val))).OrderByDescending(x => x.Title)   
+                        )
+                    )
+                );
+
+                var parsed = parser.Parse(search);
+
+                await parsed.ExecuteQueryAsync(searchQuery, null);
+
+                // Order queries can be placed anywhere inside the booleans and they still get processed fine.  
+                var yesqlQuery = session.Query().For<Article>()
+                    .All(
+                        x => x.With<ArticleByPublishedDate>(x => x.Title.IsNotIn<ArticleByPublishedDate>(s => s.Title, w => w.Title.Contains("steve"))).OrderByDescending(x => x.Title)
+                    )
+                    .Any(
+                        x => x.With<ArticleByPublishedDate>(x => x.Title.Contains("about"))
+                    )
+                    ;
+
+                // yesqlQuery.
+
+                // Normal yesql query
+                Assert.Equal(2, await yesqlQuery.CountAsync());
+                Assert.Equal("Blog by paul about chickens", (await yesqlQuery.FirstOrDefaultAsync()).Title);
+
+                // Built query.
+                // Assert.Equal("Post by steve about cats", (await searchQuery.FirstOrDefaultAsync()).Title);
+                Assert.Equal(2, await searchQuery.CountAsync());
+                Assert.Equal("Blog by paul about chickens", (await searchQuery.FirstOrDefaultAsync()).Title);
+            }
+        }                               
     }
 }
