@@ -54,6 +54,23 @@ namespace YesSql.Samples.Web
 
                             return query;
                         })
+                        .MapTo<Filter>((val, m) =>
+                        {
+                            if (Enum.TryParse<ContentsStatus>(val, true, out var e))
+                            {
+                                m.SelectedFilter = e;
+                            }
+                        })
+                        .MapFrom<Filter>((m) =>
+                        {
+                            if (m.SelectedFilter != ContentsStatus.Default)
+                            {
+                                return (true, m.SelectedFilter.ToString());
+                            }
+
+                            return (false, String.Empty);
+
+                        })
                     ),
                     DefaultTermParser("title",
                         // OneConditionParser<BlogPost>(((query, val) => query.With<BlogPostIndex>(x => x.Title.Contains(val))))

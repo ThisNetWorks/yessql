@@ -58,14 +58,16 @@ namespace YesSql.Samples.Web.Controllers
                 };
 
                 // So this is essentially the mapping. Why make a func for it?
-                var statusTerm = termList.Terms.FirstOrDefault(x => x.TermName == "status");
-                if (statusTerm != null)
-                {
-                    if (Enum.TryParse<ContentsStatus>(statusTerm.Operation.ToString(), true, out var e))
-                    {
-                        search.SelectedFilter = e;
-                    }
-                }
+                // var statusTerm = termList.Terms.FirstOrDefault(x => x.TermName == "status");
+                // if (statusTerm is TermOperationNode term && term.Operation is UnaryNode op)
+                // {
+                //     if (Enum.TryParse<ContentsStatus>(op.Value.ToString(), true, out var e))
+                //     {
+                //         search.SelectedFilter = e;
+                //     }
+                // }
+
+                termList.MapTo(search);
 
                 var vm = new BlogPostViewModel
                 {
@@ -93,6 +95,7 @@ namespace YesSql.Samples.Web.Controllers
             }
 
             // Not a dictionary because it may contain duplicates.
+            /*
 
             var searchValues = search.TermList.Terms.Select(x => new { name = x.TermName, value = x.ToString() }).ToList();
 
@@ -119,6 +122,17 @@ namespace YesSql.Samples.Web.Controllers
                             { "q", string.Join(' ', searchValues.Select(x => x.value)) }
                        }
                    );
+                */
+
+            search.TermList.MapFrom(search);
+
+
+            return RedirectToAction("Index",
+                       new RouteValueDictionary
+                       {
+                            { "q", search.TermList.ToString() }
+                       }
+                   );                   
 
         }
     }

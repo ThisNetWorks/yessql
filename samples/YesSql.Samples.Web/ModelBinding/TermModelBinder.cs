@@ -31,7 +31,7 @@ namespace YesSql.Search.ModelBinding
 
             if (valueProviderResult == ValueProviderResult.None)
             {
-                bindingContext.Result = ModelBindingResult.Success(new TermList<T>());
+                bindingContext.Result = ModelBindingResult.Success(_parser.Parse(String.Empty));
 
                 return Task.CompletedTask;
             }
@@ -43,7 +43,7 @@ namespace YesSql.Search.ModelBinding
             // Check if the argument value is null or empty
             if (string.IsNullOrEmpty(value))
             {
-                bindingContext.Result = ModelBindingResult.Success(new TermList<T>());
+                bindingContext.Result = ModelBindingResult.Success(_parser.Parse(String.Empty));
                 
                 return Task.CompletedTask;
             }

@@ -37,7 +37,7 @@ namespace YesSql.Core.QueryParser
         {
             if (String.IsNullOrEmpty(text))
             {
-                return new TermList<T>();
+                return new TermList<T>(TermOptions);
             }
 
             var context = new QueryParseContext<T>(TermOptions, new Scanner(text));
@@ -49,7 +49,7 @@ namespace YesSql.Core.QueryParser
             }
             else
             {
-                return new TermList<T>();
+                return new TermList<T>(TermOptions);
             }
         }
     }

@@ -12,7 +12,22 @@ namespace YesSql.Core.QueryParser
     // SearchScope
     // SearchParser
 
-    public class TermOption<T> where T : class
+    public class TermMapToOption
+    {}
+
+    public class TermMapToOption<TModel> : TermMapToOption
+    {
+
+    }
+
+    public class TermOption
+    {
+        public Delegate MapTo { get; set; }
+        public Delegate MapFrom { get; set; }
+        public Func<string, string, TermNode> MapFromFactory { get; set; }
+    }
+
+    public class TermOption<T> : TermOption where T : class
     {
         public TermOption(TermQueryOption<T> query, bool single = true)
         {
@@ -31,13 +46,15 @@ namespace YesSql.Core.QueryParser
     // This could be SearchScope
     public class TermList<T> : IEnumerable<TermNode> where T : class
     {
-        private Dictionary<string, TermOption<T>> _termOptions = new();
+        private Dictionary<string, TermOption<T>> _termOptions;
+
+        // This is always added to.
         private Dictionary<string, TermNode> _terms = new();
 
 
-        public TermList()
+        public TermList(Dictionary<string, TermOption<T>> termOptions)
         {
-            Terms = new();
+            _termOptions = termOptions;
         }
 
         public TermList(List<TermNode> terms, Dictionary<string, TermOption<T>> termOptions)
@@ -89,13 +106,13 @@ namespace YesSql.Core.QueryParser
             return true;
         }
 
-        public List<TermNode> Terms { get; }
+        public List<TermNode> Terms { get; } = new();
 
         // it's a function of termengine that decideds to add or replace.
         // not the parser itself.
 
 
-        public async Task<IQuery<T>> ExecuteQueryAsync(IQuery<T> query, IServiceProvider serviceProvider) //TODO if queryexecutioncontext provided, use that.
+        public async ValueTask<IQuery<T>> ExecuteQueryAsync(IQuery<T> query, IServiceProvider serviceProvider) //TODO if queryexecutioncontext provided, use that.
         {
             var context = new QueryExecutionContext<T>(query, serviceProvider);
 
@@ -108,10 +125,35 @@ namespace YesSql.Core.QueryParser
                 var termQuery = term.BuildAsync(context);
                 await termQuery.Invoke(query);
                 context.CurrentTermOption = null;
-
             }
 
             return query;
+        }
+
+        public void MapTo<TModel>(TModel model)
+        {
+            foreach (var term in _terms.Values)
+            {
+                var option = _termOptions[term.TermName];
+
+                if (option.MapTo is Action<string, TModel> action && 
+                    term is TermOperationNode operationNode && 
+                    operationNode.Operation is UnaryNode node)
+                {
+                    action(node.Value, model);
+                }
+            }            
+        }
+
+        public void MapFrom<TModel>(TModel model)
+        {
+            foreach(var option in _termOptions)
+            {
+                if (option.Value.MapFrom is Action<TermList<T>, string, TermOption, TModel> mappingMethod)
+                {
+                    mappingMethod(this, option.Key, option.Value, model);
+                }
+            }
         }
 
 
@@ -140,5 +182,18 @@ namespace YesSql.Core.QueryParser
         public IQuery<T> Query { get; }
 
         public TermOption<T> CurrentTermOption { get; set; }
+    }
+
+    public class QueryMapToContext<TModel>
+    {
+        public QueryMapToContext(TModel model)
+        {
+            Model = model;
+        }
+
+        // public TermOption<T> CurrentTermOption { get; set; }
+
+        public TModel Model { get; }
+        public TermOption CurrentTermOption { get; set; }
     }
 }
