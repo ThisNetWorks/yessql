@@ -1,8 +1,7 @@
-using Parlot;
-using Parlot.Fluent;
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using Parlot;
+using Parlot.Fluent;
 using static Parlot.Fluent.Parsers;
 
 namespace YesSql.Core.QueryParser
@@ -14,13 +13,16 @@ namespace YesSql.Core.QueryParser
 
     public class QueryParser<T> : IQueryParser<T> where T : class
     {
-        public QueryParser(params TermParserBuilder<T>[] parsers)
+        private Dictionary<string, TermOption<T>> _termOptions;
+        private Parser<TermList<T>> _parser;
+
+        public QueryParser(Parser<TermNode>[] termParsers, Dictionary<string, TermOption<T>> termOptions)
         {
-            TermOptions = parsers.ToDictionary(k => k.Name, v => v.TermOption);
+            _termOptions = termOptions;
 
-            var Terms = OneOf(parsers.Select(x => x.Parser).ToArray());
+            var terms = OneOf(termParsers);
 
-            Parser = ZeroOrMany(Terms)
+            _parser = ZeroOrMany(terms)
                     .Then(static (context, terms) => 
                     {
                         var ctx = (QueryParseContext<T>)context;
@@ -29,40 +31,24 @@ namespace YesSql.Core.QueryParser
                     });                    
         }
 
-        public IReadOnlyDictionary<string, TermOption<T>> TermOptions { get; }
-
-        protected Parser<TermList<T>> Parser { get; }
-
         public TermList<T> Parse(string text)
         {
             if (String.IsNullOrEmpty(text))
             {
-                return new TermList<T>(TermOptions);
+                return new TermList<T>(_termOptions);
             }
 
-            var context = new QueryParseContext<T>(TermOptions, new Scanner(text));
+            var context = new QueryParseContext<T>(_termOptions, new Scanner(text));
 
             ParseResult<TermList<T>> result = default(ParseResult<TermList<T>>);
-            if (Parser.Parse(context, ref result))
+            if (_parser.Parse(context, ref result))
             {
                 return result.Value;
             }
             else
             {
-                return new TermList<T>(TermOptions);
+                return new TermList<T>(_termOptions);
             }
         }
-    }
-
-    public class QueryParseContext<T> : ParseContext where T : class
-    {
-        public QueryParseContext(IReadOnlyDictionary<string, TermOption<T>> termOptions, Scanner scanner, bool useNewLines = false) : base(scanner, useNewLines)
-        {
-            TermOptions = termOptions;
-        }
-
-        public IReadOnlyDictionary<string, TermOption<T>> TermOptions { get; }
-
-        public TermOption<T> CurrentTermOption { get; set; }
     }
 }

@@ -7,7 +7,7 @@ namespace YesSql.Core.QueryParser
 {
     public abstract class QueryNode
     {
-        public abstract Func<IQuery<Tq>, ValueTask<IQuery<Tq>>> BuildAsync<Tq>(QueryExecutionContext<Tq> context) where Tq : class;
+        public abstract Func<IQuery<T>, ValueTask<IQuery<T>>> BuildAsync<T>(QueryExecutionContext<T> context) where T : class;
 
         public abstract string ToNormalizedString();
     }
@@ -31,7 +31,7 @@ namespace YesSql.Core.QueryParser
 
         public OperatorNode Operation { get; }
 
-        public override Func<IQuery<Tq>, ValueTask<IQuery<Tq>>> BuildAsync<Tq>(QueryExecutionContext<Tq> context)
+        public override Func<IQuery<T>, ValueTask<IQuery<T>>> BuildAsync<T>(QueryExecutionContext<T> context)
             => Operation.BuildAsync(context);
     }
 
@@ -80,23 +80,23 @@ namespace YesSql.Core.QueryParser
         }
 
         // TODO this works, but really need to test it against taxonomies to see if the logic is correct.
-        public override Func<IQuery<Tq>, ValueTask<IQuery<Tq>>> BuildAsync<Tq>(QueryExecutionContext<Tq> context)
+        public override Func<IQuery<T>, ValueTask<IQuery<T>>> BuildAsync<T>(QueryExecutionContext<T> context)
         {
-            var predicates = new List<Func<IQuery<Tq>, Task<IQuery<Tq>>>>();
+            var predicates = new List<Func<IQuery<T>, Task<IQuery<T>>>>();
             foreach (var child in Children)
             {
-                // Func<IQuery<Tq>, Task<IQuery<Tq>>> c = (q) => child.Operation.BuildAsync(context)(q).AsTask();
+                // Func<IQuery<T>, Task<IQuery<T>>> c = (q) => child.Operation.BuildAsync(context)(q).AsTask();
 
-                Func<IQuery<Tq>, Task<IQuery<Tq>>> predicate = (q) => context.Query.AllAsync(
+                Func<IQuery<T>, Task<IQuery<T>>> predicate = (q) => context.Query.AllAsync(
                     (q) => child.Operation.BuildAsync(context)(q).AsTask()
                 );
                 predicates.Add(predicate);
 
             }
 
-            Func<IQuery<Tq>, Task<IQuery<Tq>>> result = (Func<IQuery<Tq>, Task<IQuery<Tq>>>)Delegate.Combine(predicates.ToArray());
+            Func<IQuery<T>, Task<IQuery<T>>> result = (Func<IQuery<T>, Task<IQuery<T>>>)Delegate.Combine(predicates.ToArray());
 
-            return xyz => new ValueTask<IQuery<Tq>>(result(context.Query));
+            return xyz => new ValueTask<IQuery<T>>(result(context.Query));
         }
 
         public override string ToNormalizedString()

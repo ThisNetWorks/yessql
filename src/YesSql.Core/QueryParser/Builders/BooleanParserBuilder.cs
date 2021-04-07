@@ -1,14 +1,16 @@
-using Parlot;
-using Parlot.Fluent;
 using System;
 using System.Threading.Tasks;
 using static Parlot.Fluent.Parsers;
+using Parlot.Fluent;
 
-namespace YesSql.Core.QueryParser
+namespace YesSql.Core.QueryParser.Builders
 {
 
     public class BooleanParserBuilder<T> : OperatorParserBuilder<T> where T : class
     {
+        private TermOption<T> _termOption;
+        private Parser<OperatorNode> _parser;
+
         private BooleanParserBuilder()
         {
             var OperatorNode = Deferred<OperatorNode>();
@@ -102,27 +104,19 @@ namespace YesSql.Core.QueryParser
                    return result;
                });
 
-            Parser = OperatorNode;
+            _parser = OperatorNode;
 
-        }
-
-
-        public BooleanParserBuilder(Func<string, IQuery<T>, IQuery<T>> matchQuery, Func<string, IQuery<T>, IQuery<T>> notMatchQuery) : this()
-        {
-            Func<string, IQuery<T>, QueryExecutionContext<T>, ValueTask<IQuery<T>>> valueMatch = (q, val, ctx) => new ValueTask<IQuery<T>>(matchQuery(q, val));
-            Func<string, IQuery<T>, QueryExecutionContext<T>, ValueTask<IQuery<T>>> valueNotMatch = (q, val, ctx) => new ValueTask<IQuery<T>>(notMatchQuery(q, val));
-            TermOption = new TermOption<T>(new TermQueryOption<T>(valueMatch, valueNotMatch), single: true);
         }
 
         public BooleanParserBuilder(
+            string name, 
             Func<string, IQuery<T>, QueryExecutionContext<T>, ValueTask<IQuery<T>>> matchQuery,
             Func<string, IQuery<T>, QueryExecutionContext<T>, ValueTask<IQuery<T>>> notMatchQuery) : this()
         {
-            TermOption = new TermOption<T>(new TermQueryOption<T>(matchQuery, notMatchQuery), single: true);
+            _termOption = new TermOption<T>(name, new TermQueryOption<T>(matchQuery, notMatchQuery), single: true);
         }
 
-        public override Parser<OperatorNode> Parser { get; }
-
-        public override TermOption<T> TermOption { get; }
+        public override (Parser<OperatorNode> Parser, TermOption<T> TermOption) Build()
+            => (_parser, _termOption);
     }
 }

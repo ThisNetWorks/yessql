@@ -1,45 +1,36 @@
-using Parlot;
-using Parlot.Fluent;
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
-using YesSql.Indexes;
+using Parlot.Fluent;
 using static Parlot.Fluent.Parsers;
 
-namespace YesSql.Core.QueryParser
+namespace YesSql.Core.QueryParser.Builders
 {
-    public abstract class OperatorParserBuilder<T> where T : class
-    {
-        public abstract TermOption<T> TermOption { get; }
-        public abstract Parser<OperatorNode> Parser { get; }
-    }
-
     public class UnaryParserBuilder<T> : OperatorParserBuilder<T> where T : class
     {
-        public UnaryParserBuilder(Func<string, IQuery<T>, IQuery<T>> query, bool single = true)
-        {
-            Func<string, IQuery<T>, QueryExecutionContext<T>, ValueTask<IQuery<T>>> valueQuery = (q, val, ctx) => new ValueTask<IQuery<T>>(query(q, val));
-
-            TermOption = new TermOption<T>(new TermQueryOption<T>(valueQuery), single);
-        }
-
-        public UnaryParserBuilder(Func<string, IQuery<T>, QueryExecutionContext<T>, ValueTask<IQuery<T>>> query, bool single = true)
-        {
-            TermOption = new TermOption<T>(new TermQueryOption<T>(query), single);
-        }
-
-        public override Parser<OperatorNode> Parser
+        private static Parser<OperatorNode> _parser
             => Terms.String()
                 .Or(
                     Terms.NonWhiteSpace()
                 )
                     .Then<OperatorNode>(static (node) => new UnaryNode(node.ToString()));
 
-        public override TermOption<T> TermOption { get; }
+        private TermOption<T> _termOption;
+
+        public UnaryParserBuilder(string name, Func<string, IQuery<T>, QueryExecutionContext<T>, ValueTask<IQuery<T>>> query)
+        {
+            _termOption = new TermOption<T>(name, new TermQueryOption<T>(query));
+        }
+
+        public UnaryParserBuilder<T> AllowMultiple()
+        {
+            _termOption.Single = false;
+
+            return this;
+        }
 
         public UnaryParserBuilder<T> MapTo<TModel>(Action<string, TModel> map)
         {
-            TermOption.MapTo = map;
+            _termOption.MapTo = map;
 
             return this;
         }
@@ -63,10 +54,13 @@ namespace YesSql.Core.QueryParser
                 }
             };
 
-            TermOption.MapFrom = mapFrom;
-            TermOption.MapFromFactory = factory;
+            _termOption.MapFrom = mapFrom;
+            _termOption.MapFromFactory = factory;
 
             return this;
         }
+
+        public override (Parser<OperatorNode> Parser, TermOption<T> TermOption) Build()
+            => (_parser, _termOption);
     }
 }

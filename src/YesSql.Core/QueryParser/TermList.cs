@@ -6,49 +6,10 @@ using System.Threading.Tasks;
 
 namespace YesSql.Core.QueryParser
 {
-    // I think we might turn this into a SearchEngine
-    // SearchEngine 
-    // SearchManager -> this might be 
-    // SearchScope
-    // SearchParser
-
-    public class TermMapToOption
-    {}
-
-    public class TermMapToOption<TModel> : TermMapToOption
-    {
-
-    }
-
-    public class TermOption
-    {
-        public Delegate MapTo { get; set; }
-        public Delegate MapFrom { get; set; }
-        public Func<string, string, TermNode> MapFromFactory { get; set; }
-    }
-
-    public class TermOption<T> : TermOption where T : class
-    {
-        public TermOption(TermQueryOption<T> query, bool single = true)
-        {
-            Query = query;
-            Single = single;
-        }
-
-        /// <summary>
-        /// Whether one or many of the specified term is allowed.
-        /// </summary>
-        public bool Single { get; }
-
-        public TermQueryOption<T> Query { get; }
-    }
-
-    // This could be SearchScope
     public class TermList<T> : IEnumerable<TermNode> where T : class
     {
         private IReadOnlyDictionary<string, TermOption<T>> _termOptions;
 
-        // This is always added to.
         private Dictionary<string, TermNode> _terms = new();
 
 
@@ -59,7 +20,6 @@ namespace YesSql.Core.QueryParser
 
         public TermList(List<TermNode> terms, IReadOnlyDictionary<string, TermOption<T>> termOptions)
         {
-            Terms = terms;
             _termOptions = termOptions;
 
             foreach (var term in terms)
@@ -92,7 +52,7 @@ namespace YesSql.Core.QueryParser
                 }
                 else
                 {
-                    // this isn't going to work when removing from list, 
+                    // TODO this isn't going to work when removing from list, 
                     // i.e. search says tax:a tax:b but model says just tax:b
                     // for that we need a Merge extension.
                     var newCompound = new AndTermNode(existingTerm as TermOperationNode, term as TermOperationNode);
@@ -105,12 +65,6 @@ namespace YesSql.Core.QueryParser
 
             return true;
         }
-
-        public List<TermNode> Terms { get; } = new();
-
-        // it's a function of termengine that decideds to add or replace.
-        // not the parser itself.
-
 
         public async ValueTask<IQuery<T>> ExecuteQueryAsync(IQuery<T> query, IServiceProvider serviceProvider) //TODO if queryexecutioncontext provided, use that.
         {
@@ -155,7 +109,6 @@ namespace YesSql.Core.QueryParser
                 }
             }
         }
-
 
         public string ToNormalizedString()
             => $"{String.Join(" ", _terms.Values.Select(s => s.ToNormalizedString()))}";

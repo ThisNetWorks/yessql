@@ -11,8 +11,8 @@ using YesSql.Samples.Web.Models;
 using YesSql.Search;
 using YesSql.Sql;
 using YesSql.Services;
-using static YesSql.Core.QueryParser.Fluent.QueryParsers;
 using YesSql.Samples.Web.ViewModels;
+using YesSql.Core.QueryParser.Builders;
 
 namespace YesSql.Samples.Web
 {
@@ -33,9 +33,9 @@ namespace YesSql.Samples.Web
             services.AddMvc(options => options.EnableEndpointRouting = false);
 
             services.AddSingleton<IQueryParser<BlogPost>>(sp =>
-                QueryParser(
-                    NamedTermParser("status",
-                        OneConditionParser<BlogPost>((val, query) =>
+                new QueryParserBuilder<BlogPost>()
+                    .WithNamedTerm("status", b => b
+                        .OneCondition((val, query) =>
                         {
                             if (Enum.TryParse<ContentsStatus>(val, true, out var e))
                             {
@@ -70,16 +70,15 @@ namespace YesSql.Samples.Web
 
                             return (false, String.Empty);
 
-                        })
-                    ),
-                    DefaultTermParser("title",
-                        // OneConditionParser<BlogPost>(((query, val) => query.With<BlogPostIndex>(x => x.Title.Contains(val))))
-                        ManyConditionParser<BlogPost>(
+                        })  
+                    )
+                    .WithDefaultTerm("title", b => b
+                        .ManyCondition(
                             ((val, query) => query.With<BlogPostIndex>(x => x.Title.Contains(val))),
                             ((val, query) => query.With<BlogPostIndex>(x => x.Title.IsNotIn<BlogPostIndex>(s => s.Title, w => w.Title.Contains(val))))
                         )
                     )
-                )
+                    .Build()
             );
         }
 

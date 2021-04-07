@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using YesSql.Core.QueryParser;
+using YesSql.Core.QueryParser.Builders;
 
 namespace YesSql.Search.ModelBinding
 {
