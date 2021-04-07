@@ -46,18 +46,18 @@ namespace YesSql.Core.QueryParser
     // This could be SearchScope
     public class TermList<T> : IEnumerable<TermNode> where T : class
     {
-        private Dictionary<string, TermOption<T>> _termOptions;
+        private IReadOnlyDictionary<string, TermOption<T>> _termOptions;
 
         // This is always added to.
         private Dictionary<string, TermNode> _terms = new();
 
 
-        public TermList(Dictionary<string, TermOption<T>> termOptions)
+        public TermList(IReadOnlyDictionary<string, TermOption<T>> termOptions)
         {
             _termOptions = termOptions;
         }
 
-        public TermList(List<TermNode> terms, Dictionary<string, TermOption<T>> termOptions)
+        public TermList(List<TermNode> terms, IReadOnlyDictionary<string, TermOption<T>> termOptions)
         {
             Terms = terms;
             _termOptions = termOptions;

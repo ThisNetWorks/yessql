@@ -39,7 +39,7 @@ namespace YesSql.Tests.QueryParserTests
 
             Assert.Equal("name:steve status:published", parser.Parse("name:steve status:published").ToString());
             Assert.Equal("name:steve status:published", parser.Parse("name:steve status:published").ToNormalizedString());
-        }  
+        }
 
         [Fact]
         public void ShouldParseManyNamedTermsWithManyCondition()
@@ -55,7 +55,7 @@ namespace YesSql.Tests.QueryParserTests
 
             Assert.Equal("name:steve status:published", parser.Parse("name:steve status:published").ToString());
             Assert.Equal("name:steve status:published", parser.Parse("name:steve status:published").ToNormalizedString());
-        }   
+        }
 
         [Fact]
         public void ShouldParseDefaultTermWithManyCondition()
@@ -71,7 +71,7 @@ namespace YesSql.Tests.QueryParserTests
 
             Assert.Equal("steve status:published", parser.Parse("steve status:published").ToString());
             Assert.Equal("name:steve status:published", parser.Parse("steve status:published").ToNormalizedString());
-        }  
+        }
 
         [Fact]
         public void ShouldParseDefaultTermWithManyConditionWhenLast()
@@ -87,7 +87,7 @@ namespace YesSql.Tests.QueryParserTests
 
             Assert.Equal("steve status:published", parser.Parse("steve status:published").ToString());
             Assert.Equal("name:steve status:published", parser.Parse("steve status:published").ToNormalizedString());
-        }  
+        }
 
         [Fact]
         public void ShouldParseDefaultTermWithManyConditionWhenDefaultIsLast()
@@ -108,16 +108,16 @@ namespace YesSql.Tests.QueryParserTests
             // but somehow we might need to get the default one to run first, and see what if can find.
 
             Assert.Equal("status:(published OR steve)", parser.Parse("status:published steve").ToNormalizedString());
-        }                                        
+        }
 
         [Fact]
         public void ShouldParseDefaultTerm()
         {
             var parser = QueryParser(
-                NamedTermParser("age", 
+                NamedTermParser("age",
                     OneConditionParser<Person>(PersonOneConditionQuery())
                 ),
-                DefaultTermParser("name", 
+                DefaultTermParser("name",
                     OneConditionParser<Person>(PersonOneConditionQuery())
                 )
             );
@@ -135,10 +135,10 @@ namespace YesSql.Tests.QueryParserTests
         public void ShouldParseDefaultTermWithOneMany()
         {
             var parser = QueryParser(
-                NamedTermParser("age", 
+                NamedTermParser("age",
                     OneConditionParser<Person>(PersonOneConditionQuery())
                 ),
-                DefaultTermParser("name", 
+                DefaultTermParser("name",
                     ManyConditionParser<Person>(PersonManyMatch(), PersonManyNotMatch())
                 )
             );
@@ -150,7 +150,7 @@ namespace YesSql.Tests.QueryParserTests
             Assert.Equal("age:20 steve", parser.Parse("age:20 steve").ToString());
             Assert.Equal(2, parser.Parse("steve age:20").Terms.Count());
             Assert.Equal("name:steve", parser.Parse("steve").ToNormalizedString());
-        }        
+        }
 
         [Fact]
         public void ShouldParseDefaultTermAtEndOfStatement()
@@ -176,7 +176,7 @@ namespace YesSql.Tests.QueryParserTests
             Assert.Equal(2, parser.Parse("age:20 name:steve").Terms.Count());
             Assert.Equal("age:20 steve", parser.Parse("age:20 steve").ToString());
             Assert.Equal(2, parser.Parse("age:20 steve").Terms.Count());
-        }        
+        }
 
         [Fact]
         public void OrderOfDefaultTermShouldNotMatter()
@@ -198,7 +198,7 @@ namespace YesSql.Tests.QueryParserTests
                  defaultParser,
                  namedParser
              );
-// sand status:published is returning 1 when it should return 2. it's the same as parser1.
+            // sand status:published is returning 1 when it should return 2. it's the same as parser1.
             Assert.Equal("steve age:20", parser1.Parse("steve age:20").ToString());
 
             var result = parser1.Parse("steve age:20");
@@ -260,7 +260,7 @@ namespace YesSql.Tests.QueryParserTests
 
             Assert.Equal(search, result.ToString());
             Assert.Equal(normalized, result.ToNormalizedString());
-        }   
+        }
 
         [Fact]
         public void ShouldIgnoreMultipleNamedTerms()
@@ -274,7 +274,7 @@ namespace YesSql.Tests.QueryParserTests
             // By convention the last term is used when single = true;
             Assert.Equal("name:bill", parser.Parse("name:steve name:bill").ToString());
             Assert.Equal("name:bill", parser.Parse("name:steve name:bill").ToNormalizedString());
-        } 
+        }
 
         [Fact]
         public void ShouldAllowMultipleNamedTerms()
@@ -288,7 +288,7 @@ namespace YesSql.Tests.QueryParserTests
             // By convention the last term is used when single = true;
             Assert.Equal("name:steve name:bill", parser.Parse("name:steve name:bill").ToString());
             Assert.Equal("name:steve name:bill", parser.Parse("name:steve name:bill").ToNormalizedString());
-        }                     
+        }
 
         private static Func<string, IQuery<Person>, IQuery<Person>> PersonOneConditionQuery()
         {
@@ -301,16 +301,16 @@ namespace YesSql.Tests.QueryParserTests
         private static Func<string, IQuery<Person>, IQuery<Person>> PersonManyNotMatch()
         {
             return (val, query) => query.With<PersonByName>(x => x.SomeName.IsNotIn<PersonByName>(s => s.SomeName, w => w.SomeName.Contains(val)));
-        }         
+        }
 
         private static Func<string, IQuery<Article>, IQuery<Article>> ArticleManyMatch()
         {
             return (val, query) => query.With<ArticleByPublishedDate>(x => x.Title.Contains(val));
-        } 
+        }
 
         private static Func<string, IQuery<Article>, IQuery<Article>> ArticleManyNotMatch()
         {
             return (val, query) => query.With<ArticleByPublishedDate>(x => x.Title.IsNotIn<ArticleByPublishedDate>(s => s.Title, w => w.Title.Contains(val)));
-        }                        
+        }
     }
 }

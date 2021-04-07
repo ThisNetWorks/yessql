@@ -29,7 +29,7 @@ namespace YesSql.Core.QueryParser
                     });                    
         }
 
-        public Dictionary<string, TermOption<T>> TermOptions { get; }
+        public IReadOnlyDictionary<string, TermOption<T>> TermOptions { get; }
 
         protected Parser<TermList<T>> Parser { get; }
 
@@ -56,12 +56,12 @@ namespace YesSql.Core.QueryParser
 
     public class QueryParseContext<T> : ParseContext where T : class
     {
-        public QueryParseContext(Dictionary<string, TermOption<T>> termOptions, Scanner scanner, bool useNewLines = false) : base(scanner, useNewLines)
+        public QueryParseContext(IReadOnlyDictionary<string, TermOption<T>> termOptions, Scanner scanner, bool useNewLines = false) : base(scanner, useNewLines)
         {
             TermOptions = termOptions;
         }
 
-        public Dictionary<string, TermOption<T>> TermOptions { get; }
+        public IReadOnlyDictionary<string, TermOption<T>> TermOptions { get; }
 
         public TermOption<T> CurrentTermOption { get; set; }
     }
