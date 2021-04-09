@@ -24,11 +24,13 @@ namespace YesSql.Core.DocumentParser
 
     public class DocumentTermOption<T> : DocumentTermOption where T : class
     {
-        public DocumentTermOption(string name, DocumentTermQueryOption<T> query) : base(name)
+        // TODO the thought might be to bring these two together. they were original seperate for a reason.
+        // the reason is gone.
+        public DocumentTermOption(string name, QueryTermDocumentOption<T> query) : base(name)
         {
             Query = query;
         }
 
-        public DocumentTermQueryOption<T> Query { get; }
+        public QueryTermDocumentOption<T> Query { get; }
     }
 }

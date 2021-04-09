@@ -17,9 +17,9 @@ namespace YesSql.Core.DocumentParser.Builders
 
         private DocumentTermOption<T> _termOption;
 
-        public DocumentUnaryParserBuilder(string name, Func<string, T, DocumentExecutionContext<T>, ValueTask<T>> predicate)
+        public DocumentUnaryParserBuilder(string name, Func<string, T, FilterExecutionContext<T>, ValueTask<T>> predicate)
         {
-            _termOption = new DocumentTermOption<T>(name, new DocumentTermQueryOption<T>(predicate));
+            _termOption = new DocumentTermOption<T>(name, new QueryTermDocumentOption<T>(predicate));
         }
 
         public DocumentUnaryParserBuilder<T> AllowMultiple()

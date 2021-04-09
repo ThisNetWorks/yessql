@@ -14,11 +14,13 @@ namespace YesSql.Core.QueryParser.Builders
                 )
                     .Then<OperatorNode>(static (node) => new UnaryNode(node.ToString()));
 
-        private TermOption<T> _termOption;
+        // private TermQOption<T, IQuery<T>, FilterExecutionContext<IQuery<T>>> _termOption;
+        private QueryTermOption2<T> _termOption;
 
-        public UnaryParserBuilder(string name, Func<string, IQuery<T>, QueryExecutionContext<T>, ValueTask<IQuery<T>>> query)
+        public UnaryParserBuilder(string name, Func<string, IQuery<T>, FilterExecutionContext<IQuery<T>>, ValueTask<IQuery<T>>> query)
         {
-            _termOption = new TermOption<T>(name, new TermQueryOption<T>(query));
+            _termOption = new QueryTermOption2<T>(name, query);
+            // _termOption = new TermQOption<T, IQuery<T>, FilterExecutionContext<IQuery<T>>>(name, query);
         }
 
         public UnaryParserBuilder<T> AllowMultiple()
@@ -60,7 +62,7 @@ namespace YesSql.Core.QueryParser.Builders
             return this;
         }
 
-        public override (Parser<OperatorNode> Parser, TermOption<T> TermOption) Build()
+        public override (Parser<OperatorNode> Parser, QueryTermOption2<T> TermOption) Build()
             => (_parser, _termOption);
     }
 }

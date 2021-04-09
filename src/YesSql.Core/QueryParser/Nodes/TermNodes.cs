@@ -9,8 +9,8 @@ namespace YesSql.Core.QueryParser
 {
     public abstract class QueryNode
     {
-        public abstract Func<IQuery<T>, ValueTask<IQuery<T>>> BuildAsync<T>(QueryExecutionContext<T> context) where T : class;
-        public abstract Func<T, ValueTask<T>> BuildDocumentAsync<T>(DocumentExecutionContext<T> context) where T : class;
+        // public abstract Func<IQuery<T>, ValueTask<IQuery<T>>> BuildAsync<T>(QueryExecutionContext<T> context) where T : class;
+        public abstract Func<T, ValueTask<T>> BuildDocumentAsync<T>(FilterExecutionContext<T> context) where T : class;
 
         public abstract string ToNormalizedString();
 
@@ -38,14 +38,14 @@ namespace YesSql.Core.QueryParser
 
         public OperatorNode Operation { get; }
 
-        public override Func<IQuery<T>, ValueTask<IQuery<T>>> BuildAsync<T>(QueryExecutionContext<T> context)
-            => Operation.BuildAsync(context); 
+        // public override Func<IQuery<T>, ValueTask<IQuery<T>>> BuildAsync<T>(QueryExecutionContext<T> context)
+        //     => Operation.BuildAsync(context); 
 
 
         public override TResult Accept<TArgument, TResult>(IFilterVisitor<TArgument, TResult> visitor, TArgument argument)
             => visitor.Visit(this, argument);   
 
-        public override Func<T, ValueTask<T>> BuildDocumentAsync<T>(DocumentExecutionContext<T> context)
+        public override Func<T, ValueTask<T>> BuildDocumentAsync<T>(FilterExecutionContext<T> context)
             => Operation.BuildDocumentAsync(context);                          
     }
 
@@ -99,26 +99,26 @@ namespace YesSql.Core.QueryParser
             => visitor.Visit(this, argument);
 
         // TODO this works, but really need to test it against taxonomies to see if the logic is correct.
-        public override Func<IQuery<T>, ValueTask<IQuery<T>>> BuildAsync<T>(QueryExecutionContext<T> context)
-        {
-            var predicates = new List<Func<IQuery<T>, Task<IQuery<T>>>>();
-            foreach (var child in Children)
-            {
-                // Func<IQuery<T>, Task<IQuery<T>>> c = (q) => child.Operation.BuildAsync(context)(q).AsTask();
+        // public override Func<IQuery<T>, ValueTask<IQuery<T>>> BuildAsync<T>(QueryExecutionContext<T> context)
+        // {
+        //     var predicates = new List<Func<IQuery<T>, Task<IQuery<T>>>>();
+        //     foreach (var child in Children)
+        //     {
+        //         // Func<IQuery<T>, Task<IQuery<T>>> c = (q) => child.Operation.BuildAsync(context)(q).AsTask();
 
-                Func<IQuery<T>, Task<IQuery<T>>> predicate = (q) => context.Query.AllAsync(
-                    (q) => child.Operation.BuildAsync(context)(q).AsTask()
-                );
-                predicates.Add(predicate);
+        //         Func<IQuery<T>, Task<IQuery<T>>> predicate = (q) => context.Item.AllAsync(
+        //             (q) => child.Operation.BuildAsync(context)(q).AsTask()
+        //         );
+        //         predicates.Add(predicate);
 
-            }
+        //     }
 
-            Func<IQuery<T>, Task<IQuery<T>>> result = (Func<IQuery<T>, Task<IQuery<T>>>)Delegate.Combine(predicates.ToArray());
+        //     Func<IQuery<T>, Task<IQuery<T>>> result = (Func<IQuery<T>, Task<IQuery<T>>>)Delegate.Combine(predicates.ToArray());
 
-            return xyz => new ValueTask<IQuery<T>>(result(context.Query));
-        }
+        //     return xyz => new ValueTask<IQuery<T>>(result(context.Item));
+        // }
 
-        public override Func<T, ValueTask<T>> BuildDocumentAsync<T>(DocumentExecutionContext<T> context)
+        public override Func<T, ValueTask<T>> BuildDocumentAsync<T>(FilterExecutionContext<T> context)
         {
             throw new NotImplementedException();
         }
