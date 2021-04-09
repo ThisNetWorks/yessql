@@ -2,14 +2,19 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using YesSql.Core.DocumentParser;
+using YesSql.Core.QueryParser.Visitors;
 
 namespace YesSql.Core.QueryParser
 {
     public abstract class QueryNode
     {
         public abstract Func<IQuery<T>, ValueTask<IQuery<T>>> BuildAsync<T>(QueryExecutionContext<T> context) where T : class;
+        public abstract Func<T, ValueTask<T>> BuildDocumentAsync<T>(DocumentExecutionContext<T> context) where T : class;
 
         public abstract string ToNormalizedString();
+
+        public abstract TResult Accept<TArgument, TResult>(IFilterVisitor<TArgument, TResult> visitor, TArgument argument);
     }
 
     public abstract class TermNode : QueryNode
@@ -20,6 +25,8 @@ namespace YesSql.Core.QueryParser
         }
 
         public string TermName { get; }
+        public override TResult Accept<TArgument, TResult>(IFilterVisitor<TArgument, TResult> visitor, TArgument argument)
+            => visitor.Visit(this, argument);
     }
 
     public abstract class TermOperationNode : TermNode
@@ -32,7 +39,14 @@ namespace YesSql.Core.QueryParser
         public OperatorNode Operation { get; }
 
         public override Func<IQuery<T>, ValueTask<IQuery<T>>> BuildAsync<T>(QueryExecutionContext<T> context)
-            => Operation.BuildAsync(context);
+            => Operation.BuildAsync(context); 
+
+
+        public override TResult Accept<TArgument, TResult>(IFilterVisitor<TArgument, TResult> visitor, TArgument argument)
+            => visitor.Visit(this, argument);   
+
+        public override Func<T, ValueTask<T>> BuildDocumentAsync<T>(DocumentExecutionContext<T> context)
+            => Operation.BuildDocumentAsync(context);                          
     }
 
     public class NamedTermNode : TermOperationNode
@@ -41,11 +55,13 @@ namespace YesSql.Core.QueryParser
         {
         }
 
+
+
         public override string ToNormalizedString()
             => $"{TermName}:{Operation.ToNormalizedString()}";
 
         public override string ToString()
-            => $"{TermName}:{Operation.ToString()}";
+            => $"{TermName}:{Operation.ToString()}";           
     }
 
 
@@ -59,7 +75,7 @@ namespace YesSql.Core.QueryParser
             => $"{TermName}:{Operation.ToNormalizedString()}";
 
         public override string ToString()
-            => $"{Operation.ToString()}";
+            => $"{Operation.ToString()}";          
     }
 
     public abstract class CompoundTermNode : TermNode
@@ -79,6 +95,9 @@ namespace YesSql.Core.QueryParser
             Children.Add(newTerm);
         }
 
+        public override TResult Accept<TArgument, TResult>(IFilterVisitor<TArgument, TResult> visitor, TArgument argument)
+            => visitor.Visit(this, argument);
+
         // TODO this works, but really need to test it against taxonomies to see if the logic is correct.
         public override Func<IQuery<T>, ValueTask<IQuery<T>>> BuildAsync<T>(QueryExecutionContext<T> context)
         {
@@ -97,6 +116,11 @@ namespace YesSql.Core.QueryParser
             Func<IQuery<T>, Task<IQuery<T>>> result = (Func<IQuery<T>, Task<IQuery<T>>>)Delegate.Combine(predicates.ToArray());
 
             return xyz => new ValueTask<IQuery<T>>(result(context.Query));
+        }
+
+        public override Func<T, ValueTask<T>> BuildDocumentAsync<T>(DocumentExecutionContext<T> context)
+        {
+            throw new NotImplementedException();
         }
 
         public override string ToNormalizedString()

@@ -1,17 +1,18 @@
 using Parlot;
 using Parlot.Fluent;
 using System;
+using YesSql.Core.QueryParser;
 using static Parlot.Fluent.Parsers;
 
-namespace YesSql.Core.QueryParser.Builders
+namespace YesSql.Core.DocumentParser.Builders
 {
-    public class NamedTermParserBuilder<T> : TermParserBuilder<T> where T : class
+    public class DocumentNamedTermParserBuilder<T> : DocumentTermParserBuilder<T> where T : class
     {
-        public NamedTermParserBuilder(string name) : base(name)
+        public DocumentNamedTermParserBuilder(string name) : base(name)
         {
         }
 
-        public override (Parser<TermNode> Parser, TermOption<T> TermOption) Build()
+        public override (Parser<TermNode> Parser, DocumentTermOption<T> TermOption) Build()
         {
             var op = _operatorParser.Build();
 

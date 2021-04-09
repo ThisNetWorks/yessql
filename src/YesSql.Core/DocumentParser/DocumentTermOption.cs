@@ -1,10 +1,11 @@
 using System;
+using YesSql.Core.QueryParser;
 
-namespace YesSql.Core.QueryParser
+namespace YesSql.Core.DocumentParser
 {
-    public abstract class TermOption
+    public abstract class DocumentTermOption
     {
-        public TermOption(string name)
+        public DocumentTermOption(string name)
         {
             Name = name;
         }
@@ -21,13 +22,13 @@ namespace YesSql.Core.QueryParser
         public Func<string, string, TermNode> MapFromFactory { get; set; }
     }
 
-    public class TermOption<T> : TermOption where T : class
+    public class DocumentTermOption<T> : DocumentTermOption where T : class
     {
-        public TermOption(string name, TermQueryOption<T> query) : base(name)
+        public DocumentTermOption(string name, DocumentTermQueryOption<T> query) : base(name)
         {
             Query = query;
         }
 
-        public TermQueryOption<T> Query { get; }
+        public DocumentTermQueryOption<T> Query { get; }
     }
 }

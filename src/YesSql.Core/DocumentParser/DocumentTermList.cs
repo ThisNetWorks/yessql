@@ -3,23 +3,24 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using YesSql.Core.QueryParser;
 using YesSql.Core.QueryParser.Visitors;
 
-namespace YesSql.Core.QueryParser
+namespace YesSql.Core.DocumentParser
 {
-    public class TermList<T> : IEnumerable<TermNode> where T : class
+    public class DocumentTermList<T> : IEnumerable<TermNode> where T : class
     {
-        private IReadOnlyDictionary<string, TermOption<T>> _termOptions;
+        private IReadOnlyDictionary<string, DocumentTermOption<T>> _termOptions;
 
         private Dictionary<string, TermNode> _terms = new();
 
 
-        public TermList(IReadOnlyDictionary<string, TermOption<T>> termOptions)
+        public DocumentTermList(IReadOnlyDictionary<string, DocumentTermOption<T>> termOptions)
         {
             _termOptions = termOptions;
         }
 
-        public TermList(List<TermNode> terms, IReadOnlyDictionary<string, TermOption<T>> termOptions)
+        public DocumentTermList(List<TermNode> terms, IReadOnlyDictionary<string, DocumentTermOption<T>> termOptions)
         {
             _termOptions = termOptions;
 
@@ -69,11 +70,10 @@ namespace YesSql.Core.QueryParser
 
         // this would become part of the engine. which may well be passed into the TermList
 
-        public async ValueTask<IQuery<T>> ExecuteQueryAsync(IQuery<T> query, IServiceProvider serviceProvider) //TODO if queryexecutioncontext provided, use that.
-        {
-            var context = new QueryExecutionContext<T>(query, serviceProvider);
 
-            var visitor = new QueryFilterVisitor<T>();
+        public async ValueTask<T> ExecuteDocumentQueryAsync(T query, IServiceProvider serviceProvider) //TODO if queryexecutioncontext provided, use that.
+        {
+            var context = new DocumentExecutionContext<T>(query, serviceProvider);
 
             foreach (var term in _terms.Values)
             {
@@ -81,26 +81,7 @@ namespace YesSql.Core.QueryParser
 
                 context.CurrentTermOption = _termOptions[term.TermName];
 
-                // var termQuery = term.BuildAsync(context);
-                var termQuery = visitor.Visit(term, context); 
-                query = await termQuery.Invoke(query);
-                context.CurrentTermOption = null;
-            }
-
-            return query;
-        }
-
-        public async ValueTask<IQuery<T>> ExecuteDocumentQueryAsync(IQuery<T> query, IServiceProvider serviceProvider) //TODO if queryexecutioncontext provided, use that.
-        {
-            var context = new QueryExecutionContext<T>(query, serviceProvider);
-
-            foreach (var term in _terms.Values)
-            {
-                // TODO optimize value task later.
-
-                context.CurrentTermOption = _termOptions[term.TermName];
-
-                var termQuery = term.BuildAsync(context);
+                var termQuery = term.BuildDocumentAsync(context);
                 // var termQuery = visitor.Visit(term, context); 
                 query = await termQuery.Invoke(query);
                 context.CurrentTermOption = null;
@@ -128,7 +109,7 @@ namespace YesSql.Core.QueryParser
         {
             foreach(var option in _termOptions)
             {
-                if (option.Value.MapFrom is Action<TermList<T>, string, TermOption, TModel> mappingMethod)
+                if (option.Value.MapFrom is Action<DocumentTermList<T>, string, DocumentTermOption, TModel> mappingMethod)
                 {
                     mappingMethod(this, option.Key, option.Value, model);
                 }

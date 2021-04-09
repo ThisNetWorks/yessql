@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
 using YesSql.Commands;
+using YesSql.Core.DocumentParser.Builders;
 using YesSql.Core.QueryParser.Builders;
 using YesSql.Indexes;
 using YesSql.Services;
@@ -18,6 +19,7 @@ using YesSql.Tests.Commands;
 using YesSql.Tests.CompiledQueries;
 using YesSql.Tests.Indexes;
 using YesSql.Tests.Models;
+using YesSql.Tests.QueryParserTests;
 
 namespace YesSql.Tests
 {
@@ -6545,6 +6547,51 @@ namespace YesSql.Tests
                 Assert.Equal(2, await searchQuery.CountAsync());
                 Assert.Equal("Blog by paul about chickens", (await searchQuery.FirstOrDefaultAsync()).Title);
             }
-        }                               
+        }    
+
+        [Fact]
+        public async Task ShouldParseDocumentNamedTermQuery()
+        {
+            var document = new ArticleDocument();
+            var billsArticle = new Article
+            {
+                Title = "Article by bill about rabbits"
+            };
+
+            var stevesArticle = new Article
+            {
+                Title = "Post by steve about cats"
+            };
+
+            document.Articles.Add(billsArticle.Title, billsArticle);
+            document.Articles.Add(stevesArticle.Title, stevesArticle);
+
+            var search = "title:steve";
+
+                var parser = new DocumentParserBuilder<Dictionary<string, Article>>()
+                    .WithNamedTerm("title", b => b
+                        .OneCondition((val, doc) => 
+                        {
+                            var t = doc.Where(x => x.Key.Contains(val)).ToDictionary(k => k.Key, v => v.Value);
+                            return t;
+
+                        })
+                    )
+                    .Build();
+
+                var parsed = parser.Parse(search);
+
+                await parsed.ExecuteDocumentQueryAsync(document.Articles, null);
+
+            // Normal linq query. might use key might use value.
+            Assert.Equal("Post by steve about cats", document.Articles.Where(x => x.Value.Title.Contains("Steve", StringComparison.OrdinalIgnoreCase)).FirstOrDefault().Value.Title);
+            Assert.Equal(1, document.Articles.Where(x => x.Value.Title.Contains("Steve", StringComparison.OrdinalIgnoreCase)).Count());
+
+                // // Built query.
+                // Assert.Equal("Post by steve about cats", (await searchQuery.FirstOrDefaultAsync()).Title);
+                // Assert.Equal(1, await searchQuery.CountAsync());
+            
+        }
+
     }
 }

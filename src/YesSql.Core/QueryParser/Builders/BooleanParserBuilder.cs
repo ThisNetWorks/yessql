@@ -113,7 +113,7 @@ namespace YesSql.Core.QueryParser.Builders
             Func<string, IQuery<T>, QueryExecutionContext<T>, ValueTask<IQuery<T>>> matchQuery,
             Func<string, IQuery<T>, QueryExecutionContext<T>, ValueTask<IQuery<T>>> notMatchQuery) : this()
         {
-            _termOption = new TermOption<T>(name, new TermQueryOption<T>(matchQuery, notMatchQuery), single: true);
+            _termOption = new TermOption<T>(name, new TermQueryOption<T>(matchQuery, notMatchQuery));
         }
 
         public override (Parser<OperatorNode> Parser, TermOption<T> TermOption) Build()

@@ -5,9 +5,9 @@ using static Parlot.Fluent.Parsers;
 
 namespace YesSql.Core.QueryParser.Builders
 {
-    public class DefaultTermParserBuilder2<T> : TermParserBuilder<T> where T : class
+    public class DefaultTermParserBuilder<T> : TermParserBuilder<T> where T : class
     {
-        public DefaultTermParserBuilder2(string name) : base(name)
+        public DefaultTermParserBuilder(string name) : base(name)
         {
         }
 

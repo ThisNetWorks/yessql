@@ -1,5 +1,7 @@
 using System;
 using System.Threading.Tasks;
+using YesSql.Core.DocumentParser;
+using YesSql.Core.QueryParser.Visitors;
 
 namespace YesSql.Core.QueryParser
 {
@@ -41,6 +43,30 @@ namespace YesSql.Core.QueryParser
 
         public override string ToString()
             => $"{Value.ToString()}";
+
+        public override TResult Accept<TArgument, TResult>(IFilterVisitor<TArgument, TResult> visitor, TArgument argument)
+            => visitor.Visit(this, argument);
+
+        public override Func<T, ValueTask<T>> BuildDocumentAsync<T>(DocumentExecutionContext<T> context)
+        {
+            var currentQuery = context.CurrentTermOption.Query.MatchQuery;
+            if (!UseMatch)
+            {
+                currentQuery = context.CurrentTermOption.Query.NotMatchQuery;
+            }
+
+            return BuildDocumentAsyncInternal(context, currentQuery);
+
+        }
+
+        private Func<T, ValueTask<T>> BuildDocumentAsyncInternal<T>(DocumentExecutionContext<T> context, Func<string, T, DocumentExecutionContext<T>, ValueTask<T>> queryMethod) where T : class
+        {
+            // return result => queryMethod(Value, context.Document, context);
+
+            Func<T, ValueTask<T>> result = (t) => queryMethod(Value, context.Document, context);
+
+            return result;
+        }          
     }
 
     public class NotUnaryNode : OperatorNode
@@ -60,12 +86,18 @@ namespace YesSql.Core.QueryParser
                  (q) => Operation.BuildAsync(context)(q).AsTask()
             ));              
         }   
-
+        public override TResult Accept<TArgument, TResult>(IFilterVisitor<TArgument, TResult> visitor, TArgument argument)
+            => visitor.Visit(this, argument);
         public override string ToNormalizedString()
             => ToString();
 
         public override string ToString()
             => $"{OperatorValue} {Operation.ToString()}";
+
+        public override Func<T, ValueTask<T>> BuildDocumentAsync<T>(DocumentExecutionContext<T> context)
+        {
+            throw new NotImplementedException();
+        }
     }
 
     public class OrNode : OperatorNode
@@ -81,12 +113,20 @@ namespace YesSql.Core.QueryParser
         public OperatorNode Right { get; }
         public string Value { get; }
 
+        public override TResult Accept<TArgument, TResult>(IFilterVisitor<TArgument, TResult> visitor, TArgument argument)
+            => visitor.Visit(this, argument);
+
         public override Func<IQuery<T>, ValueTask<IQuery<T>>> BuildAsync<T>(QueryExecutionContext<T> context)
         {
             return result => new ValueTask<IQuery<T>>(context.Query.AnyAsync(
                 (q) => Left.BuildAsync(context)(q).AsTask(),
                 (q) => Right.BuildAsync(context)(q).AsTask()
             ));
+        }
+
+        public override Func<T, ValueTask<T>> BuildDocumentAsync<T>(DocumentExecutionContext<T> context)
+        {
+            throw new NotImplementedException();
         }
 
         public override string ToNormalizedString()
@@ -96,7 +136,7 @@ namespace YesSql.Core.QueryParser
             => $"{Left.ToString()} {Value} {Right.ToString()}";
     }
 
-    public class AndNode: OperatorNode 
+    public class AndNode : OperatorNode 
     {
         public AndNode(OperatorNode left, OperatorNode right, string value)
         {
@@ -116,12 +156,18 @@ namespace YesSql.Core.QueryParser
                 (q) => Right.BuildAsync(context)(q).AsTask()
             ));
         }
-
+        public override TResult Accept<TArgument, TResult>(IFilterVisitor<TArgument, TResult> visitor, TArgument argument)
+            => visitor.Visit(this, argument);
         public override string ToNormalizedString()
             => $"({Left.ToNormalizedString()} AND {Right.ToNormalizedString()})";
 
         public override string ToString()
             => $"{Left.ToString()} {Value} {Right.ToString()}";
+
+        public override Func<T, ValueTask<T>> BuildDocumentAsync<T>(DocumentExecutionContext<T> context)
+        {
+            throw new NotImplementedException();
+        }
     }
 
     public class NotNode : AndNode
@@ -150,8 +196,16 @@ namespace YesSql.Core.QueryParser
 
         public OperatorNode Operation { get; }
 
+        public override TResult Accept<TArgument, TResult>(IFilterVisitor<TArgument, TResult> visitor, TArgument argument)
+            => visitor.Visit(this, argument);
+
         public override Func<IQuery<T>, ValueTask<IQuery<T>>> BuildAsync<T>(QueryExecutionContext<T> context)
             => Operation.BuildAsync(context);
+
+        public override Func<T, ValueTask<T>> BuildDocumentAsync<T>(DocumentExecutionContext<T> context)
+        {
+            throw new NotImplementedException();
+        }
 
         public override string ToNormalizedString()
             => ToString();
