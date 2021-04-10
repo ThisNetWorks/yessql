@@ -12,7 +12,7 @@ namespace YesSql.Core.FilterEngines
     }
 
     // TODO this as a abstract class is not that useful.
-    public abstract class TermEngine<T, TTermList, TTerm> where T : class where TTermList : FilterEngine<T, TTerm> where TTerm : TermOption
+    public abstract class TermEngine<T, TTermList, TTerm> where TTermList : FilterEngine<T, TTerm> where TTerm : TermOption
     {
         protected Dictionary<string, TTerm> _termOptions;
         protected Parser<List<TermNode>> _termNodeParser;
@@ -73,7 +73,7 @@ namespace YesSql.Core.FilterEngines
             => new QueryParseContext<T>(_termOptions, scanner);
     }
 
-    public class EnumerableEngine<T> : TermEngine<T, EnumerableFilterEngine<T>, EnumerableTermOption<T>> where T : class
+    public class EnumerableEngine<T> : TermEngine<T, EnumerableFilterEngine<T>, EnumerableTermOption<T>>
     {
         public EnumerableEngine(Parser<TermNode>[] termParsers, Dictionary<string, EnumerableTermOption<T>> termOptions) : base(termParsers, termOptions)
         { }

@@ -14,7 +14,7 @@ namespace YesSql.Core.FilterEngines
         public IReadOnlyDictionary<string, QueryTermOption<T>> TermOptions { get; }
     }
 
-    public class EnumerableParseContext<T> : ParseContext where T : class
+    public class EnumerableParseContext<T> : ParseContext
     {
         public EnumerableParseContext(IReadOnlyDictionary<string, EnumerableTermOption<T>> termOptions, Scanner scanner, bool useNewLines = false) : base(scanner, useNewLines)
         {

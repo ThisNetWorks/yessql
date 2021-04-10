@@ -23,7 +23,7 @@ namespace YesSql.Core.FilterEngines
         public QueryTermOption<T> CurrentTermOption { get; set; }
     }
 
-    public class EnumerableExecutionContext<T> : FilterExecutionContext<T> where T : class
+    public class EnumerableExecutionContext<T> : FilterExecutionContext<T>
     {
         public EnumerableExecutionContext(T item, IServiceProvider serviceProvider) : base(item, serviceProvider)
         {

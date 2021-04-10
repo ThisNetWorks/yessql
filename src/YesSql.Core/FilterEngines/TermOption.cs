@@ -39,7 +39,7 @@ namespace YesSql.Core.FilterEngines
         public Func<string, IQuery<T>, QueryExecutionContext<T>, ValueTask<IQuery<T>>> NotMatchPredicate { get; }
     }
 
-    public class EnumerableTermOption<T> : TermOption where T : class
+    public class EnumerableTermOption<T> : TermOption
     {
         public EnumerableTermOption(string name, Func<string, T, EnumerableExecutionContext<T>, ValueTask<T>> matchPredicate) : base(name)
         {

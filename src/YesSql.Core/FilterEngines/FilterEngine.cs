@@ -7,7 +7,7 @@ using YesSql.Core.FilterEngines.Visitors;
 
 namespace YesSql.Core.FilterEngines
 {
-    public abstract class FilterEngine<T, TTermOption> : IEnumerable<TermNode> where T : class where TTermOption : TermOption
+    public abstract class FilterEngine<T, TTermOption> : IEnumerable<TermNode> where TTermOption : TermOption
     {
         protected IReadOnlyDictionary<string, TTermOption> _termOptions;
 
@@ -139,7 +139,7 @@ namespace YesSql.Core.FilterEngines
         }
     }
 
-    public class EnumerableFilterEngine<T> : FilterEngine<T, EnumerableTermOption<T>> where T : class
+    public class EnumerableFilterEngine<T> : FilterEngine<T, EnumerableTermOption<T>>
     {
         public EnumerableFilterEngine(IReadOnlyDictionary<string, EnumerableTermOption<T>> termOptions) : base(termOptions)
         { }
