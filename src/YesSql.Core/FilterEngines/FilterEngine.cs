@@ -148,9 +148,9 @@ namespace YesSql.Core.FilterEngines
         public EnumerableFilterEngine(List<TermNode> terms, IReadOnlyDictionary<string, EnumerableTermOption<T>> termOptions) : base(terms, termOptions)
         { }
 
-        public async ValueTask<T> ExecuteAsync(T query, IServiceProvider serviceProvider) //TODO if queryexecutioncontext provided, use that.
+        public async ValueTask<IEnumerable<T>> ExecuteAsync(IEnumerable<T> source, IServiceProvider serviceProvider) //TODO if queryexecutioncontext provided, use that.
         {
-            var context = new EnumerableExecutionContext<T>(query, serviceProvider);
+            var context = new EnumerableExecutionContext<T>(source, serviceProvider);
             var visitor = new EnumerableFilterVisitor<T>();
 
             foreach (var term in _terms.Values)
@@ -160,11 +160,11 @@ namespace YesSql.Core.FilterEngines
                 context.CurrentTermOption = _termOptions[term.TermName];
 
                 var termQuery = visitor.Visit(term, context);
-                query = await termQuery.Invoke(query);
+                source = await termQuery.Invoke(source);
                 context.CurrentTermOption = null;
             }
 
-            return query;
+            return source;
         }
 
     }

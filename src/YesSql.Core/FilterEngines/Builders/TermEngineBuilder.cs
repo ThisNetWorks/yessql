@@ -2,7 +2,7 @@ using Parlot.Fluent;
 
 namespace YesSql.Core.FilterEngines.Builders
 {
-    public abstract class TermEngineBuilder<T, TTermOption> where T : class where TTermOption : TermOption
+    public abstract class TermEngineBuilder<T, TTermOption>  where TTermOption : TermOption
     {
         public TermEngineBuilder(string name)
         {

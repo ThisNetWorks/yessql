@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace YesSql.Core.FilterEngines.Builders
@@ -45,14 +46,14 @@ namespace YesSql.Core.FilterEngines.Builders
 
     public static class EnumerableTermFilterBuilderExtensions
     {
-        public static DocumentUnaryEngineBuilder<T> OneCondition<T>(this TermEngineBuilder<T, EnumerableTermOption<T>> builder, Func<string, T, T> matchQuery) where T : class
+        public static DocumentUnaryEngineBuilder<T> OneCondition<T>(this TermEngineBuilder<T, EnumerableTermOption<T>> builder, Func<string, IEnumerable<T>, IEnumerable<T>> matchQuery)
         {
-            Func<string, T, EnumerableExecutionContext<T>, ValueTask<T>> valueQuery = (q, val, ctx) => new ValueTask<T>(matchQuery(q, val));
+            Func<string, IEnumerable<T>, EnumerableExecutionContext<T>, ValueTask<IEnumerable<T>>> valueQuery = (q, val, ctx) => new ValueTask<IEnumerable<T>>(matchQuery(q, val));
 
             return builder.OneCondition(valueQuery);
         }
 
-        public static DocumentUnaryEngineBuilder<T> OneCondition<T>(this TermEngineBuilder<T, EnumerableTermOption<T>> builder, Func<string, T, EnumerableExecutionContext<T>, ValueTask<T>> matchQuery) where T : class
+        public static DocumentUnaryEngineBuilder<T> OneCondition<T>(this TermEngineBuilder<T, EnumerableTermOption<T>> builder, Func<string, IEnumerable<T>, EnumerableExecutionContext<T>, ValueTask<IEnumerable<T>>> matchQuery)
         {
             var operatorBuilder = new DocumentUnaryEngineBuilder<T>(builder.Name, matchQuery);
             builder.SetOperator(operatorBuilder);
@@ -62,19 +63,19 @@ namespace YesSql.Core.FilterEngines.Builders
 
         public static DocumentBooleanEngineBuilder<T> ManyCondition<T>(
             this TermEngineBuilder<T, EnumerableTermOption<T>> builder,
-            Func<string, T, T> matchQuery,
-            Func<string, T, T> notMatchQuery) where T : class
+            Func<string, IEnumerable<T>, IEnumerable<T>> matchQuery,
+            Func<string, IEnumerable<T>, IEnumerable<T>> notMatchQuery) 
         {
-            Func<string, T, EnumerableExecutionContext<T>, ValueTask<T>> valueMatch = (q, val, ctx) => new ValueTask<T>(matchQuery(q, val));
-            Func<string, T, EnumerableExecutionContext<T>, ValueTask<T>> valueNotMatch = (q, val, ctx) => new ValueTask<T>(notMatchQuery(q, val));
+            Func<string, IEnumerable<T>, EnumerableExecutionContext<T>, ValueTask<IEnumerable<T>>> valueMatch = (q, val, ctx) => new ValueTask<IEnumerable<T>>(matchQuery(q, val));
+            Func<string, IEnumerable<T>, EnumerableExecutionContext<T>, ValueTask<IEnumerable<T>>> valueNotMatch = (q, val, ctx) => new ValueTask<IEnumerable<T>>(notMatchQuery(q, val));
 
             return builder.ManyCondition(valueMatch, valueNotMatch);
         }
 
         public static DocumentBooleanEngineBuilder<T> ManyCondition<T>(
             this TermEngineBuilder<T, EnumerableTermOption<T>> builder,
-            Func<string, T, EnumerableExecutionContext<T>, ValueTask<T>> matchQuery,
-            Func<string, T, EnumerableExecutionContext<T>, ValueTask<T>> notMatchQuery) where T : class
+            Func<string, IEnumerable<T>, EnumerableExecutionContext<T>, ValueTask<IEnumerable<T>>> matchQuery,
+            Func<string, IEnumerable<T>, EnumerableExecutionContext<T>, ValueTask<IEnumerable<T>>> notMatchQuery) 
         {
             var operatorBuilder = new DocumentBooleanEngineBuilder<T>(builder.Name, matchQuery, notMatchQuery);
             builder.SetOperator(operatorBuilder);

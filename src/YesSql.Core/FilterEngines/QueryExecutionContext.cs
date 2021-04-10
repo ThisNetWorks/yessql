@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace YesSql.Core.FilterEngines
 {
@@ -23,9 +24,9 @@ namespace YesSql.Core.FilterEngines
         public QueryTermOption<T> CurrentTermOption { get; set; }
     }
 
-    public class EnumerableExecutionContext<T> : FilterExecutionContext<T>
+    public class EnumerableExecutionContext<T> : FilterExecutionContext<IEnumerable<T>>
     {
-        public EnumerableExecutionContext(T item, IServiceProvider serviceProvider) : base(item, serviceProvider)
+        public EnumerableExecutionContext(IEnumerable<T> item, IServiceProvider serviceProvider) : base(item, serviceProvider)
         {
         }
 

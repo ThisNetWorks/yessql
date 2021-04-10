@@ -6549,7 +6549,7 @@ namespace YesSql.Tests
         }    
 
         [Fact]
-        public async Task ShouldParseDocumentNamedTermQuery()
+        public async Task ShouldParseEnumerableNamedTermQuery()
         {
             var document = new ArticleDocument();
             var billsArticle = new Article
@@ -6567,13 +6567,12 @@ namespace YesSql.Tests
 
             var search = "title:steve";
 
-            var engine = new EnumerableEngineBuilder<IEnumerable<KeyValuePair<string, Article>>>()
+            var engine = new EnumerableEngineBuilder<KeyValuePair<string, Article>>()
                 .WithNamedTerm("title", b => b
                     .OneCondition((val, doc) => 
                     {
-                        // var t = doc.Where(x => x.Key.Contains(val)).ToDictionary(k => k.Key, v => v.Value);
-                        var y = doc.Where(x => x.Key.Contains(val));
-                        return y;
+                        var result = doc.Where(x => x.Key.Contains(val));
+                        return result;
                     })
                 )
                 .Build();
@@ -6591,6 +6590,62 @@ namespace YesSql.Tests
             Assert.Equal(1, articles.Count());
             
         }
+
+        [Fact]
+        public async Task ShouldParseEnumerableOrQuery()
+        {
+            var document = new ArticleDocument();
+            var billsArticle = new Article
+            {
+                Title = "Article by bill about rabbits"
+            };
+
+            var stevesArticle = new Article
+            {
+                Title = "Post by steve about cats"
+            };
+
+            document.Articles.Add(billsArticle.Title, billsArticle);
+            document.Articles.Add(stevesArticle.Title, stevesArticle);
+
+            // boolean OR "title:(bill OR post)"
+            var search = "title:bill post";
+
+            var engine = new EnumerableEngineBuilder<KeyValuePair<string, Article>>()
+                .WithNamedTerm("title", b => b
+                    .ManyCondition(
+                        (val, doc) => 
+                        {
+                            var result = doc.Where(x => x.Key.Contains(val, StringComparison.OrdinalIgnoreCase));
+                            return result;
+                        },
+                        (val, doc) => 
+                        {
+                            var result = doc.Where(x => x.Key.Contains(val, StringComparison.OrdinalIgnoreCase));
+                            return result;
+                        }
+                    )
+                )
+                .Build();
+
+            var filterEngine = engine.Parse(search);
+
+            var articles = await filterEngine.ExecuteAsync(document.Articles, null);
+
+            Assert.Equal(2, articles.Count());
+
+            
+
+            Assert.Equal(2, document.Articles.Where(x => x.Value.Title.Contains("Bill", StringComparison.OrdinalIgnoreCase) || x.Value.Title.Contains("post", StringComparison.OrdinalIgnoreCase)).Count());
+
+            var first = document.Articles.Where(x => x.Value.Title.Contains("Bill", StringComparison.OrdinalIgnoreCase));
+            Assert.Single(first);
+            var second = document.Articles.Where(x => x.Value.Title.Contains("post", StringComparison.OrdinalIgnoreCase));
+            Assert.Single(second);
+            
+            var union = first.Union(second);
+            Assert.Equal(2, union.Count());
+        } 
 
     }
 }

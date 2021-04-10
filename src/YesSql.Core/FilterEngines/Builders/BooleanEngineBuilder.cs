@@ -2,10 +2,11 @@ using System;
 using System.Threading.Tasks;
 using static Parlot.Fluent.Parsers;
 using Parlot.Fluent;
+using System.Collections.Generic;
 
 namespace YesSql.Core.FilterEngines.Builders
 {
-    public abstract class BooleanEngineBuilder<T, TTermOption> : OperatorEngineBuilder<T, TTermOption> where T : class where TTermOption : TermOption
+    public abstract class BooleanEngineBuilder<T, TTermOption> : OperatorEngineBuilder<T, TTermOption> where TTermOption : TermOption
     {
         private static Parser<OperatorNode> _parser;
         protected TTermOption _termOption;
@@ -122,12 +123,12 @@ namespace YesSql.Core.FilterEngines.Builders
         }
     }
 
-    public class DocumentBooleanEngineBuilder<T> : BooleanEngineBuilder<T, EnumerableTermOption<T>> where T : class
+    public class DocumentBooleanEngineBuilder<T> : BooleanEngineBuilder<T, EnumerableTermOption<T>> 
     {
         public DocumentBooleanEngineBuilder(
             string name,
-            Func<string, T, EnumerableExecutionContext<T>, ValueTask<T>> matchQuery,
-            Func<string, T, EnumerableExecutionContext<T>, ValueTask<T>> notMatchQuery)
+            Func<string, IEnumerable<T>, EnumerableExecutionContext<T>, ValueTask<IEnumerable<T>>> matchQuery,
+            Func<string, IEnumerable<T>, EnumerableExecutionContext<T>, ValueTask<IEnumerable<T>>> notMatchQuery)
         {
             _termOption = new EnumerableTermOption<T>(name, matchQuery, notMatchQuery);
         }

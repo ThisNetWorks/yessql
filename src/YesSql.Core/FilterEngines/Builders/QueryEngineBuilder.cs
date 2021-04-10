@@ -47,7 +47,7 @@ namespace YesSql.Core.FilterEngines.Builders
         }
     }
 
-    public class EnumerableEngineBuilder<T> where T : class
+    public class EnumerableEngineBuilder<T>
     {
         private Dictionary<string, TermEngineBuilder<T, EnumerableTermOption<T>>> _termBuilders = new Dictionary<string, TermEngineBuilder<T, EnumerableTermOption<T>>>();
 
@@ -71,7 +71,7 @@ namespace YesSql.Core.FilterEngines.Builders
 
     public static class EnumerableEngineBuilderExtensions
     {
-        public static EnumerableEngineBuilder<T> WithNamedTerm<T>(this EnumerableEngineBuilder<T> builder, string name, Action<NamedTermEngineBuilder<T, EnumerableTermOption<T>>> action) where T : class
+        public static EnumerableEngineBuilder<T> WithNamedTerm<T>(this EnumerableEngineBuilder<T> builder, string name, Action<NamedTermEngineBuilder<T, EnumerableTermOption<T>>> action) 
         {
             var parserBuilder = new NamedTermEngineBuilder<T, EnumerableTermOption<T>>(name);
             action(parserBuilder);

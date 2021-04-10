@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace YesSql.Core.FilterEngines
@@ -41,12 +42,12 @@ namespace YesSql.Core.FilterEngines
 
     public class EnumerableTermOption<T> : TermOption
     {
-        public EnumerableTermOption(string name, Func<string, T, EnumerableExecutionContext<T>, ValueTask<T>> matchPredicate) : base(name)
+        public EnumerableTermOption(string name, Func<string, IEnumerable<T>, EnumerableExecutionContext<T>, ValueTask<IEnumerable<T>>> matchPredicate) : base(name)
         {
             MatchPredicate = matchPredicate;
         }
 
-        public EnumerableTermOption(string name, Func<string, T, EnumerableExecutionContext<T>, ValueTask<T>> matchPredicate, Func<string, T, EnumerableExecutionContext<T>, ValueTask<T>> notMatchPredicate)
+        public EnumerableTermOption(string name, Func<string, IEnumerable<T>, EnumerableExecutionContext<T>, ValueTask<IEnumerable<T>>> matchPredicate, Func<string, IEnumerable<T>, EnumerableExecutionContext<T>, ValueTask<IEnumerable<T>>> notMatchPredicate)
             : base(name)
         {
             MatchPredicate = matchPredicate;
@@ -54,8 +55,8 @@ namespace YesSql.Core.FilterEngines
         }
 
 
-        public Func<string, T, EnumerableExecutionContext<T>, ValueTask<T>> MatchPredicate { get; }
-        public Func<string, T, EnumerableExecutionContext<T>, ValueTask<T>> NotMatchPredicate { get; }
+        public Func<string, IEnumerable<T>, EnumerableExecutionContext<T>, ValueTask<IEnumerable<T>>> MatchPredicate { get; }
+        public Func<string, IEnumerable<T>, EnumerableExecutionContext<T>, ValueTask<IEnumerable<T>>> NotMatchPredicate { get; }
     }
 
 

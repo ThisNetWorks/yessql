@@ -1,22 +1,25 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace YesSql.Core.FilterEngines.Visitors
 {
-    public class EnumerableFilterVisitor<T> : IFilterVisitor<EnumerableExecutionContext<T>, Func<T, ValueTask<T>>> where T : class
+    public class EnumerableFilterVisitor<T> : IFilterVisitor<EnumerableExecutionContext<T>, Func<IEnumerable<T>, ValueTask<IEnumerable<T>>>>
     {
-        public Func<T, ValueTask<T>> Visit(TermNode node, EnumerableExecutionContext<T> argument)
+        public Func<IEnumerable<T>, ValueTask<IEnumerable<T>>> Visit(TermNode node, EnumerableExecutionContext<T> argument)
             => node.Accept(this, argument);
 
-        public Func<T, ValueTask<T>> Visit(TermOperationNode node, EnumerableExecutionContext<T> argument)
+        public Func<IEnumerable<T>, ValueTask<IEnumerable<T>>> Visit(TermOperationNode node, EnumerableExecutionContext<T> argument)
             => node.Operation.Accept(this, argument);
 
-        public Func<T, ValueTask<T>> Visit(AndTermNode node, EnumerableExecutionContext<T> argument)
+        public Func<IEnumerable<T>, ValueTask<IEnumerable<T>>> Visit(AndTermNode node, EnumerableExecutionContext<T> argument)
         {
             throw new NotImplementedException();
         }
 
-        public Func<T, ValueTask<T>> Visit(UnaryNode node, EnumerableExecutionContext<T> argument)
+        public Func<IEnumerable<T>, ValueTask<IEnumerable<T>>> Visit(UnaryNode node, EnumerableExecutionContext<T> argument)
         {
             var currentQuery = argument.CurrentTermOption.MatchPredicate;
             if (!node.UseMatch)
@@ -27,22 +30,39 @@ namespace YesSql.Core.FilterEngines.Visitors
             return result => currentQuery(node.Value, argument.Item, argument);
         }
 
-        public Func<T, ValueTask<T>> Visit(NotUnaryNode node, EnumerableExecutionContext<T> argument)
+        public Func<IEnumerable<T>, ValueTask<IEnumerable<T>>> Visit(NotUnaryNode node, EnumerableExecutionContext<T> argument)
         {
             throw new NotImplementedException();
         }
 
-        public Func<T, ValueTask<T>> Visit(OrNode node, EnumerableExecutionContext<T> argument)
+        public Func<IEnumerable<T>, ValueTask<IEnumerable<T>>> Visit(OrNode node, EnumerableExecutionContext<T> argument)
+        {
+            // Func<IEnumerable<T>, ValueTask<IEnumerable<T>>> result = async (source) => 
+            // {
+            //     var left = await node.Left.Accept(this, argument).Invoke(source);
+            //     var right = await node.Right.Accept(this, argument).Invoke(source);
+
+            //     return left.Union(right);
+
+            // };
+
+            // return result;
+
+            return async (source) => 
+            {
+                var left = await node.Left.Accept(this, argument).Invoke(source);
+                var right = await node.Right.Accept(this, argument).Invoke(source);
+
+                return left.Union(right);
+            };
+        }
+
+        public Func<IEnumerable<T>, ValueTask<IEnumerable<T>>> Visit(AndNode node, EnumerableExecutionContext<T> argument)
         {
             throw new NotImplementedException();
         }
 
-        public Func<T, ValueTask<T>> Visit(AndNode node, EnumerableExecutionContext<T> argument)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Func<T, ValueTask<T>> Visit(GroupNode node, EnumerableExecutionContext<T> argument)
+        public Func<IEnumerable<T>, ValueTask<IEnumerable<T>>> Visit(GroupNode node, EnumerableExecutionContext<T> argument)
         {
             throw new NotImplementedException();
         }
