@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Routing;
 using System;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using YesSql.Core.QueryParser;
+using YesSql.Core.FilterEngines;
 using YesSql.Search.ModelBinding;
 
 namespace YesSql.Samples.Web.ViewModels
@@ -27,7 +27,7 @@ namespace YesSql.Samples.Web.ViewModels
         public ContentsStatus SelectedFilter { get; set; }
 
         [ModelBinder(BinderType = typeof(TermModelBinder<BlogPost>), Name = "SearchText")]
-        public TermList<BlogPost> TermList { get; set; }
+        public QueryFilterEngine<BlogPost> TermList { get; set; }
 
         [BindNever]
         public List<SelectListItem> Filters { get; set; } = new();

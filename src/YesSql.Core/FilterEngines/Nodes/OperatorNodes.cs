@@ -1,11 +1,10 @@
 using System;
 using System.Threading.Tasks;
-using YesSql.Core.DocumentParser;
-using YesSql.Core.QueryParser.Visitors;
+using YesSql.Core.FilterEngines.Visitors;
 
-namespace YesSql.Core.QueryParser
+namespace YesSql.Core.FilterEngines
 {
-    public abstract class OperatorNode : QueryNode
+    public abstract class OperatorNode : FilterNode
     {
     }
 
@@ -16,7 +15,7 @@ namespace YesSql.Core.QueryParser
         {
             Value = value;
             UseMatch = useMatch;
-        }        
+        }
 
         public string Value { get; }
         public bool UseMatch { get; }
@@ -47,26 +46,26 @@ namespace YesSql.Core.QueryParser
         public override TResult Accept<TArgument, TResult>(IFilterVisitor<TArgument, TResult> visitor, TArgument argument)
             => visitor.Visit(this, argument);
 
-        public override Func<T, ValueTask<T>> BuildDocumentAsync<T>(FilterExecutionContext<T> context)
-        {
-            var currentQuery = context.CurrentTermOption.Query.MatchQuery;
-            if (!UseMatch)
-            {
-                currentQuery = context.CurrentTermOption.Query.NotMatchQuery;
-            }
+        // public override Func<T, ValueTask<T>> BuildDocumentAsync<T>(FilterExecutionContext<T> context)
+        // {
+        //     var currentQuery = context.CurrentTermOption.Query.MatchQuery;
+        //     if (!UseMatch)
+        //     {
+        //         currentQuery = context.CurrentTermOption.Query.NotMatchQuery;
+        //     }
 
-            return BuildDocumentAsyncInternal(context, currentQuery);
+        //     return BuildDocumentAsyncInternal(context, currentQuery);
 
-        }
+        // }
 
-        private Func<T, ValueTask<T>> BuildDocumentAsyncInternal<T>(FilterExecutionContext<T> context, Func<string, T, FilterExecutionContext<T>, ValueTask<T>> queryMethod) where T : class
-        {
-            // return result => queryMethod(Value, context.Document, context);
+        // private Func<T, ValueTask<T>> BuildDocumentAsyncInternal<T>(FilterExecutionContext<T> context, Func<string, T, FilterExecutionContext<T>, ValueTask<T>> queryMethod) where T : class
+        // {
+        //     // return result => queryMethod(Value, context.Document, context);
 
-            Func<T, ValueTask<T>> result = (t) => queryMethod(Value, context.Item, context);
+        //     Func<T, ValueTask<T>> result = (t) => queryMethod(Value, context.Item, context);
 
-            return result;
-        }          
+        //     return result;
+        // }          
     }
 
     public class NotUnaryNode : OperatorNode
@@ -87,11 +86,6 @@ namespace YesSql.Core.QueryParser
 
         public override string ToString()
             => $"{OperatorValue} {Operation.ToString()}";
-
-        public override Func<T, ValueTask<T>> BuildDocumentAsync<T>(FilterExecutionContext<T> context)
-        {
-            throw new NotImplementedException();
-        }
     }
 
     public class OrNode : OperatorNode
@@ -110,11 +104,6 @@ namespace YesSql.Core.QueryParser
         public override TResult Accept<TArgument, TResult>(IFilterVisitor<TArgument, TResult> visitor, TArgument argument)
             => visitor.Visit(this, argument);
 
-        public override Func<T, ValueTask<T>> BuildDocumentAsync<T>(FilterExecutionContext<T> context)
-        {
-            throw new NotImplementedException();
-        }
-
         public override string ToNormalizedString()
             => $"({Left.ToNormalizedString()} OR {Right.ToNormalizedString()})";
 
@@ -122,7 +111,7 @@ namespace YesSql.Core.QueryParser
             => $"{Left.ToString()} {Value} {Right.ToString()}";
     }
 
-    public class AndNode : OperatorNode 
+    public class AndNode : OperatorNode
     {
         public AndNode(OperatorNode left, OperatorNode right, string value)
         {
@@ -142,11 +131,6 @@ namespace YesSql.Core.QueryParser
 
         public override string ToString()
             => $"{Left.ToString()} {Value} {Right.ToString()}";
-
-        public override Func<T, ValueTask<T>> BuildDocumentAsync<T>(FilterExecutionContext<T> context)
-        {
-            throw new NotImplementedException();
-        }
     }
 
     public class NotNode : AndNode
@@ -166,7 +150,7 @@ namespace YesSql.Core.QueryParser
     /// Marks a node as being produced by a group request, i.e. () were specified
     /// </summary>
 
-    public class GroupNode : OperatorNode 
+    public class GroupNode : OperatorNode
     {
         public GroupNode(OperatorNode operation)
         {
@@ -177,11 +161,6 @@ namespace YesSql.Core.QueryParser
 
         public override TResult Accept<TArgument, TResult>(IFilterVisitor<TArgument, TResult> visitor, TArgument argument)
             => visitor.Visit(this, argument);
-
-        public override Func<T, ValueTask<T>> BuildDocumentAsync<T>(FilterExecutionContext<T> context)
-        {
-            throw new NotImplementedException();
-        }
 
         public override string ToNormalizedString()
             => ToString();

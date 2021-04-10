@@ -2,22 +2,18 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using YesSql.Core.DocumentParser;
-using YesSql.Core.QueryParser.Visitors;
+using YesSql.Core.FilterEngines.Visitors;
 
-namespace YesSql.Core.QueryParser
+namespace YesSql.Core.FilterEngines
 {
-    public abstract class QueryNode
+    public abstract class FilterNode
     {
-        // public abstract Func<IQuery<T>, ValueTask<IQuery<T>>> BuildAsync<T>(QueryExecutionContext<T> context) where T : class;
-        public abstract Func<T, ValueTask<T>> BuildDocumentAsync<T>(FilterExecutionContext<T> context) where T : class;
-
         public abstract string ToNormalizedString();
 
         public abstract TResult Accept<TArgument, TResult>(IFilterVisitor<TArgument, TResult> visitor, TArgument argument);
     }
 
-    public abstract class TermNode : QueryNode
+    public abstract class TermNode : FilterNode
     {
         public TermNode(string termName)
         {
@@ -43,10 +39,10 @@ namespace YesSql.Core.QueryParser
 
 
         public override TResult Accept<TArgument, TResult>(IFilterVisitor<TArgument, TResult> visitor, TArgument argument)
-            => visitor.Visit(this, argument);   
+            => visitor.Visit(this, argument);
 
-        public override Func<T, ValueTask<T>> BuildDocumentAsync<T>(FilterExecutionContext<T> context)
-            => Operation.BuildDocumentAsync(context);                          
+        // public override Func<T, ValueTask<T>> BuildDocumentAsync<T>(FilterExecutionContext<T> context)
+        //     => Operation.BuildDocumentAsync(context);                          
     }
 
     public class NamedTermNode : TermOperationNode
@@ -55,13 +51,11 @@ namespace YesSql.Core.QueryParser
         {
         }
 
-
-
         public override string ToNormalizedString()
             => $"{TermName}:{Operation.ToNormalizedString()}";
 
         public override string ToString()
-            => $"{TermName}:{Operation.ToString()}";           
+            => $"{TermName}:{Operation.ToString()}";
     }
 
 
@@ -75,7 +69,7 @@ namespace YesSql.Core.QueryParser
             => $"{TermName}:{Operation.ToNormalizedString()}";
 
         public override string ToString()
-            => $"{Operation.ToString()}";          
+            => $"{Operation.ToString()}";
     }
 
     public abstract class CompoundTermNode : TermNode
@@ -118,10 +112,6 @@ namespace YesSql.Core.QueryParser
         //     return xyz => new ValueTask<IQuery<T>>(result(context.Item));
         // }
 
-        public override Func<T, ValueTask<T>> BuildDocumentAsync<T>(FilterExecutionContext<T> context)
-        {
-            throw new NotImplementedException();
-        }
 
         public override string ToNormalizedString()
             => string.Join(" ", Children.Select(c => c.ToNormalizedString()));

@@ -1,7 +1,4 @@
-using System;
-using System.Threading.Tasks;
-
-namespace YesSql.Core.QueryParser.Visitors
+namespace YesSql.Core.FilterEngines.Visitors
 {
     public interface IFilterVisitor<TArgument, TResult>
     {
@@ -13,6 +10,5 @@ namespace YesSql.Core.QueryParser.Visitors
         TResult Visit(OrNode node, TArgument argument);
         TResult Visit(AndNode node, TArgument argument);
         TResult Visit(GroupNode node, TArgument argument);
-    } 
-   
+    }
 }

@@ -1,17 +1,15 @@
-using Parlot;
 using Parlot.Fluent;
-using System;
 using static Parlot.Fluent.Parsers;
 
-namespace YesSql.Core.QueryParser.Builders
+namespace YesSql.Core.FilterEngines.Builders
 {
-    public class DefaultTermParserBuilder<T> : TermParserBuilder<T> where T : class
+    public class DefaultTermEngineBuilder<T, TTermOption> : TermEngineBuilder<T, TTermOption> where T : class where TTermOption : TermOption
     {
-        public DefaultTermParserBuilder(string name) : base(name)
+        public DefaultTermEngineBuilder(string name) : base(name)
         {
         }
 
-        public override (Parser<TermNode> Parser, TermOption<T> TermOption) Build()
+        public override (Parser<TermNode> Parser, TTermOption TermOption) Build()
         {
             var op = _operatorParser.Build();
 
@@ -25,7 +23,6 @@ namespace YesSql.Core.QueryParser.Builders
             var parser = termParser.Or(defaultParser);
 
             return (parser, op.TermOption);
-
         }
-    }   
+    }
 }

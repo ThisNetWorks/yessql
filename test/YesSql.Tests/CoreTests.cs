@@ -10,8 +10,7 @@ using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
 using YesSql.Commands;
-using YesSql.Core.DocumentParser.Builders;
-using YesSql.Core.QueryParser.Builders;
+using YesSql.Core.FilterEngines.Builders;
 using YesSql.Indexes;
 using YesSql.Services;
 using YesSql.Sql;
@@ -19,7 +18,7 @@ using YesSql.Tests.Commands;
 using YesSql.Tests.CompiledQueries;
 using YesSql.Tests.Indexes;
 using YesSql.Tests.Models;
-using YesSql.Tests.QueryParserTests;
+using YesSql.Tests.QueryEngines.QueryEngineTests;
 
 namespace YesSql.Tests
 {
@@ -5992,7 +5991,7 @@ namespace YesSql.Tests
 
                 var searchQuery = session.Query<Article>();
 
-                var parser = new QueryParserBuilder<Article>()
+                var parser = new QueryEngineBuilder<Article>()
                     .WithNamedTerm("title", b => b
                         .OneCondition((val, query) => query.With<ArticleByPublishedDate>(x => x.Title.Contains(val)))
                     )
@@ -6000,7 +5999,7 @@ namespace YesSql.Tests
 
                 var parsed = parser.Parse(search);
 
-                await parsed.ExecuteQueryAsync(searchQuery, null);
+                await parsed.ExecuteAsync(searchQuery, null);
 
                 // Normal yesql query
                 Assert.Equal("Post by steve about cats", (await session.Query().For<Article>().With<ArticleByPublishedDate>(x => x.Title.Contains("Steve")).FirstOrDefaultAsync()).Title);
@@ -6042,7 +6041,7 @@ namespace YesSql.Tests
 
                 var searchQuery = session.Query<Article>();
 
-                var parser = new QueryParserBuilder<Article>()
+                var parser = new QueryEngineBuilder<Article>()
                     .WithNamedTerm("title", b => b
                         .OneCondition(async (val, query, ctx) => 
                         {
@@ -6053,7 +6052,7 @@ namespace YesSql.Tests
 
                 var parsed = parser.Parse(search);
 
-                await parsed.ExecuteQueryAsync(searchQuery, null);
+                await parsed.ExecuteAsync(searchQuery, null);
 
                 // Normal yesql query
                 Assert.Equal("Post by steve about cats", (await session.Query().For<Article>().With<ArticleByPublishedDate>(x => x.Title.Contains("Steve")).FirstOrDefaultAsync()).Title);
@@ -6094,14 +6093,14 @@ namespace YesSql.Tests
             {
                 var searchQuery = session.Query<Article>();
 
-                var parser = new QueryParserBuilder<Article>()
+                var parser = new QueryEngineBuilder<Article>()
                     .WithDefaultTerm("title", b => b
                         .OneCondition((val, query) => query.With<ArticleByPublishedDate>(x => x.Title.Contains(val))))
                     .Build();
 
                 var parsed = parser.Parse(search);
 
-                await parsed.ExecuteQueryAsync(searchQuery, null);
+                await parsed.ExecuteAsync(searchQuery, null);
 
                 // Normal yesql query
                 Assert.Equal("Post by steve about cats", (await session.Query().For<Article>().With<ArticleByPublishedDate>(x => x.Title.Contains("Steve")).FirstOrDefaultAsync()).Title);
@@ -6143,7 +6142,7 @@ namespace YesSql.Tests
                 var search = "title:bill post";
                 var searchQuery = session.Query<Article>();
 
-                var parser = new QueryParserBuilder<Article>()
+                var parser = new QueryEngineBuilder<Article>()
                     .WithNamedTerm("title", b => b
                         .ManyCondition(
                             (val, query) => query.With<ArticleByPublishedDate>(x => x.Title.Contains(val)),
@@ -6153,7 +6152,7 @@ namespace YesSql.Tests
                     .Build();
 
                 var parsed = parser.Parse(search);
-                await parsed.ExecuteQueryAsync(searchQuery, null);
+                await parsed.ExecuteAsync(searchQuery, null);
 
                 var yesqlQuery = session.Query().For<Article>()
                     .Any(
@@ -6198,7 +6197,7 @@ namespace YesSql.Tests
                 var search = "title:bill AND rabbits";
                 var searchQuery = session.Query<Article>();
 
-                var parser = new QueryParserBuilder<Article>()
+                var parser = new QueryEngineBuilder<Article>()
                     .WithNamedTerm("title", b => b
                         .ManyCondition(
                             (val, query) => query.With<ArticleByPublishedDate>(x => x.Title.Contains(val)),
@@ -6209,7 +6208,7 @@ namespace YesSql.Tests
 
                 var parsed = parser.Parse(search);
 
-                await parsed.ExecuteQueryAsync(searchQuery, null);
+                await parsed.ExecuteAsync(searchQuery, null);
 
                 var yesqlQuery = session.Query().For<Article>()
                     .All(
@@ -6254,7 +6253,7 @@ namespace YesSql.Tests
                 var search = "title:Article title:Article";
                 var searchQuery = session.Query<Article>();
 
-                var parser = new QueryParserBuilder<Article>()
+                var parser = new QueryEngineBuilder<Article>()
                     .WithNamedTerm("title", b => b
                         .OneCondition((val ,query) => query.With<ArticleByPublishedDate>(x => x.Title.Contains(val)))
                         .AllowMultiple()
@@ -6263,7 +6262,7 @@ namespace YesSql.Tests
 
                 var parsed = parser.Parse(search);
 
-                await parsed.ExecuteQueryAsync(searchQuery, null);
+                await parsed.ExecuteAsync(searchQuery, null);
 
                 var yesqlQuery = session.Query().For<Article>()
                     .All(
@@ -6309,7 +6308,7 @@ namespace YesSql.Tests
                 var search = "title:(beach AND sand) OR (mountain AND lake)";
                 var searchQuery = session.Query<Article>();
  
-                var parser = new QueryParserBuilder<Article>()
+                var parser = new QueryEngineBuilder<Article>()
                     .WithNamedTerm("title", b => b
                         .ManyCondition(
                             (val, query) => query.With<ArticleByPublishedDate>(x => x.Title.Contains(val)),
@@ -6320,7 +6319,7 @@ namespace YesSql.Tests
 
                 var parsed = parser.Parse(search);
 
-                await parsed.ExecuteQueryAsync(searchQuery, null);               
+                await parsed.ExecuteAsync(searchQuery, null);               
 
                 var yesqlQuery = session.Query().For<Article>()
                 // this top one is a combind node where left is Or and Right is And
@@ -6378,7 +6377,7 @@ namespace YesSql.Tests
                 var search = "title:((beach AND sand) OR (mountain AND lake)) NOT lizards";
                 var searchQuery = session.Query<Article>();
 
-                var parser = new QueryParserBuilder<Article>()
+                var parser = new QueryEngineBuilder<Article>()
                     .WithNamedTerm("title", b => b
                         .ManyCondition(
                             (val, query) => query.With<ArticleByPublishedDate>(x => x.Title.Contains(val)),
@@ -6389,7 +6388,7 @@ namespace YesSql.Tests
 
                 var parsed = parser.Parse(search);
 
-                await parsed.ExecuteQueryAsync(searchQuery, null);               
+                await parsed.ExecuteAsync(searchQuery, null);               
 
                 var yesqlQuery = session.Query().For<Article>()
                 // this top one is a combind node where left is Or and Right is And
@@ -6449,7 +6448,7 @@ namespace YesSql.Tests
                 var search = "title:NOT steve";          
                 var searchQuery = session.Query<Article>();
 
-                var parser = new QueryParserBuilder<Article>()
+                var parser = new QueryEngineBuilder<Article>()
                     .WithNamedTerm("title", b => b
                         .ManyCondition(
                             (val, query) => query.With<ArticleByPublishedDate>(x => x.Title.Contains(val)),
@@ -6460,7 +6459,7 @@ namespace YesSql.Tests
 
                 var parsed = parser.Parse(search);
 
-                await parsed.ExecuteQueryAsync(searchQuery, null);  
+                await parsed.ExecuteAsync(searchQuery, null);  
 
                 var yesqlQuery = session.Query().For<Article>()
                     .All(
@@ -6511,7 +6510,7 @@ namespace YesSql.Tests
                 var search = "title:about NOT steve";          
                 var searchQuery = session.Query<Article>();
 
-                var parser = new QueryParserBuilder<Article>()
+                var parser = new QueryEngineBuilder<Article>()
                     .WithNamedTerm("title", b => b
                         .ManyCondition(
                             (val, query) => query.With<ArticleByPublishedDate>(x => x.Title.Contains(val)),
@@ -6524,7 +6523,7 @@ namespace YesSql.Tests
 
                 var parsed = parser.Parse(search);
 
-                await parsed.ExecuteQueryAsync(searchQuery, null);
+                await parsed.ExecuteAsync(searchQuery, null);
 
                 // Order queries can be placed anywhere inside the booleans and they still get processed fine.  
                 var yesqlQuery = session.Query().For<Article>()
@@ -6568,28 +6567,28 @@ namespace YesSql.Tests
 
             var search = "title:steve";
 
-                var parser = new DocumentParserBuilder<Dictionary<string, Article>>()
-                    .WithNamedTerm("title", b => b
-                        .OneCondition((val, doc) => 
-                        {
-                            var t = doc.Where(x => x.Key.Contains(val)).ToDictionary(k => k.Key, v => v.Value);
-                            return t;
+            var engine = new EnumerableEngineBuilder<IEnumerable<KeyValuePair<string, Article>>>()
+                .WithNamedTerm("title", b => b
+                    .OneCondition((val, doc) => 
+                    {
+                        // var t = doc.Where(x => x.Key.Contains(val)).ToDictionary(k => k.Key, v => v.Value);
+                        var y = doc.Where(x => x.Key.Contains(val));
+                        return y;
+                    })
+                )
+                .Build();
 
-                        })
-                    )
-                    .Build();
+            var filterEngine = engine.Parse(search);
 
-                var parsed = parser.Parse(search);
-
-                await parsed.ExecuteDocumentQueryAsync(document.Articles, null);
+            var articles = await filterEngine.ExecuteAsync(document.Articles, null);
 
             // Normal linq query. might use key might use value.
             Assert.Equal("Post by steve about cats", document.Articles.Where(x => x.Value.Title.Contains("Steve", StringComparison.OrdinalIgnoreCase)).FirstOrDefault().Value.Title);
             Assert.Equal(1, document.Articles.Where(x => x.Value.Title.Contains("Steve", StringComparison.OrdinalIgnoreCase)).Count());
 
                 // // Built query.
-                // Assert.Equal("Post by steve about cats", (await searchQuery.FirstOrDefaultAsync()).Title);
-                // Assert.Equal(1, await searchQuery.CountAsync());
+            Assert.Equal("Post by steve about cats", articles.FirstOrDefault().Key);
+            Assert.Equal(1, articles.Count());
             
         }
 

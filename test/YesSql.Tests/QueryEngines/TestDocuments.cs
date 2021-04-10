@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using YesSql.Tests.Models;
 
-namespace YesSql.Tests.QueryParserTests
+namespace YesSql.Tests.QueryEngines.QueryEngineTests
 {
     public class ArticleDocument
     {

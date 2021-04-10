@@ -2,20 +2,20 @@ using Parlot.Fluent;
 using System;
 using System.Linq;
 using Xunit;
-using YesSql.Core.QueryParser.Builders;
+using YesSql.Core.FilterEngines.Builders;
 using YesSql.Services;
 using YesSql.Tests.Indexes;
 using YesSql.Tests.Models;
 
-namespace YesSql.Tests.QueryParserTests
+namespace YesSql.Tests.QueryEngines.QueryEngineTests
 {
-    public class SearchParserTests
+    public class QueryEngineTests
     {
 
         [Fact]
         public void ShouldParseNamedTerm()
         {
-            var parser = new QueryParserBuilder<Person>()
+            var parser = new QueryEngineBuilder<Person>()
                 .WithNamedTerm("name", b => b.OneCondition(PersonOneConditionQuery()))
                 .Build();
 
@@ -26,7 +26,7 @@ namespace YesSql.Tests.QueryParserTests
         [Fact]
         public void ShouldParseManyNamedTerms()
         {
-            var parser = new QueryParserBuilder<Person>()
+            var parser = new QueryEngineBuilder<Person>()
                 .WithNamedTerm("name", b => b.OneCondition(PersonOneConditionQuery()))
                 .WithNamedTerm("status", b => b.OneCondition(PersonOneConditionQuery()))
                 .Build();
@@ -38,7 +38,7 @@ namespace YesSql.Tests.QueryParserTests
         [Fact]
         public void ShouldParseManyNamedTermsWithManyCondition()
         {
-            var parser = new QueryParserBuilder<Person>()
+            var parser = new QueryEngineBuilder<Person>()
                 .WithNamedTerm("name", b => b
                     .ManyCondition(PersonManyMatch(), PersonManyNotMatch()))
                 .WithNamedTerm("status", b => b
@@ -52,7 +52,7 @@ namespace YesSql.Tests.QueryParserTests
         [Fact]
         public void ShouldParseDefaultTermWithManyCondition()
         {
-            var parser = new QueryParserBuilder<Person>()
+            var parser = new QueryEngineBuilder<Person>()
                 .WithDefaultTerm("name", b => b.ManyCondition(PersonManyMatch(), PersonManyNotMatch()))
                 .WithNamedTerm("status", b => b.ManyCondition(PersonManyMatch(), PersonManyNotMatch()))
                 .Build();
@@ -64,7 +64,7 @@ namespace YesSql.Tests.QueryParserTests
         [Fact]
         public void ShouldParseDefaultTermWithManyConditionWhenLast()
         {
-            var parser = new QueryParserBuilder<Person>()
+            var parser = new QueryEngineBuilder<Person>()
                 .WithNamedTerm("status", b => b.ManyCondition(PersonManyMatch(), PersonManyNotMatch()))
                 .WithDefaultTerm("name", b => b.ManyCondition(PersonManyMatch(), PersonManyNotMatch()))
                 .Build();
@@ -78,7 +78,7 @@ namespace YesSql.Tests.QueryParserTests
         {
             // TODO we just need a validation to stop this happening.
             // so really the answer is if you have two manys. you cannot have a default.
-          var parser = new QueryParserBuilder<Person>()
+          var parser = new QueryEngineBuilder<Person>()
                 .WithDefaultTerm("name", b => b.ManyCondition(PersonManyMatch(), PersonManyNotMatch()))
                 .WithNamedTerm("status", b => b.ManyCondition(PersonManyMatch(), PersonManyNotMatch()))
                 .Build();
@@ -93,7 +93,7 @@ namespace YesSql.Tests.QueryParserTests
         [Fact]
         public void ShouldParseDefaultTerm()
         {
-            var parser = new QueryParserBuilder<Person>()
+            var parser = new QueryEngineBuilder<Person>()
                 .WithNamedTerm("age", b => b.OneCondition(PersonOneConditionQuery()))
                 .WithDefaultTerm("name", b => b.OneCondition(PersonOneConditionQuery()))
                 .Build();
@@ -110,7 +110,7 @@ namespace YesSql.Tests.QueryParserTests
         [Fact]
         public void ShouldParseDefaultTermWithOneMany()
         {
-            var parser = new QueryParserBuilder<Person>()
+            var parser = new QueryEngineBuilder<Person>()
                 .WithNamedTerm("age", builder => builder.OneCondition(PersonOneConditionQuery()))
                 .WithDefaultTerm("name", builder =>
                     builder.ManyCondition(PersonManyMatch(), PersonManyNotMatch())
@@ -130,7 +130,7 @@ namespace YesSql.Tests.QueryParserTests
         [Fact]
         public void ShouldParseDefaultTermAtEndOfStatement()
         {
-            var parser = new QueryParserBuilder<Person>()
+            var parser = new QueryEngineBuilder<Person>()
                 .WithNamedTerm("age", b => b
                     .OneCondition((val, query) =>
                     {
@@ -154,7 +154,7 @@ namespace YesSql.Tests.QueryParserTests
        [Fact]
         public void ShouldParseDefaultTermAtEndOfStatementWithBuilder()
         {
-            var parser = new QueryParserBuilder<Person>()
+            var parser = new QueryEngineBuilder<Person>()
                 .WithNamedTerm("age", builder =>
                     builder
                         .OneCondition((val, query) =>
@@ -182,12 +182,12 @@ namespace YesSql.Tests.QueryParserTests
         [Fact]
         public void OrderOfDefaultTermShouldNotMatter()
         {
-            var parser1 = new QueryParserBuilder<Person>()
+            var parser1 = new QueryEngineBuilder<Person>()
                 .WithNamedTerm("age", b => b.OneCondition(PersonOneConditionQuery()))
                 .WithDefaultTerm("name", b => b.ManyCondition(PersonManyMatch(), PersonManyNotMatch()))
                 .Build();
 
-            var parser2 = new QueryParserBuilder<Person>()
+            var parser2 = new QueryEngineBuilder<Person>()
                 .WithDefaultTerm("name", b => b.ManyCondition(PersonManyMatch(), PersonManyNotMatch()))
                 .WithNamedTerm("age", b => b.OneCondition(PersonOneConditionQuery()))
                 .Build();
@@ -221,7 +221,7 @@ namespace YesSql.Tests.QueryParserTests
         [InlineData("title:beach NOT mountain lake", "title:((beach NOT mountain) OR lake)")] // this is questionable, but with the right () can achieve anything
         public void Complex(string search, string normalized)
         {
-            var parser = new QueryParserBuilder<Article>()
+            var parser = new QueryEngineBuilder<Article>()
                 .WithNamedTerm("title", b => b.ManyCondition(ArticleManyMatch(), ArticleManyNotMatch()))
                 .Build();
 
@@ -236,7 +236,7 @@ namespace YesSql.Tests.QueryParserTests
         [InlineData("title:((bill AND steve) OR Paul)", "title:((bill AND steve) OR Paul)")]
         public void ShouldGroup(string search, string normalized)
         {
-            var parser = new QueryParserBuilder<Article>()
+            var parser = new QueryEngineBuilder<Article>()
                 .WithNamedTerm("title", b => b.ManyCondition(ArticleManyMatch(), ArticleManyNotMatch()))
                 .Build();
 
@@ -249,7 +249,7 @@ namespace YesSql.Tests.QueryParserTests
         [Fact]
         public void ShouldIgnoreMultipleNamedTerms()
         {
-            var parser = new QueryParserBuilder<Person>()
+            var parser = new QueryEngineBuilder<Person>()
                 .WithNamedTerm("name", b => b.OneCondition(PersonOneConditionQuery()))
                 .Build();
 
@@ -261,7 +261,7 @@ namespace YesSql.Tests.QueryParserTests
         [Fact]
         public void ShouldAllowMultipleNamedTerms()
         {
-            var parser = new QueryParserBuilder<Person>()
+            var parser = new QueryEngineBuilder<Person>()
                 .WithNamedTerm("name", b => b
                     .OneCondition(PersonOneConditionQuery())
                     .AllowMultiple())

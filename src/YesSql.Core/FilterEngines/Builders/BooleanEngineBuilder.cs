@@ -3,15 +3,14 @@ using System.Threading.Tasks;
 using static Parlot.Fluent.Parsers;
 using Parlot.Fluent;
 
-namespace YesSql.Core.QueryParser.Builders
+namespace YesSql.Core.FilterEngines.Builders
 {
-
-    public class BooleanParserBuilder<T> : OperatorParserBuilder<T> where T : class
+    public abstract class BooleanEngineBuilder<T, TTermOption> : OperatorEngineBuilder<T, TTermOption> where T : class where TTermOption : TermOption
     {
-        private TermOption<T> _termOption;
-        private Parser<OperatorNode> _parser;
+        private static Parser<OperatorNode> _parser;
+        protected TTermOption _termOption;
 
-        private BooleanParserBuilder()
+        static BooleanEngineBuilder()
         {
             var OperatorNode = Deferred<OperatorNode>();
 
@@ -79,27 +78,27 @@ namespace YesSql.Core.QueryParser.Builders
             OperatorNode.Parser = AndNode.And(ZeroOrMany(NotOperator.Or(OrOperator).And(AndNode)))
                .Then<OperatorNode>(static (node) =>
                {
-                    static NotNode CreateNotNode(OperatorNode result, (string, OperatorNode) op)
-                        => new NotNode(result, new UnaryNode(((UnaryNode)op.Item2).Value, false), op.Item1);
-                    
-                    static OrNode CreateOrNode(OperatorNode result, (string, OperatorNode) op)
-                        => new OrNode(result, op.Item2, op.Item1);
+                   static NotNode CreateNotNode(OperatorNode result, (string, OperatorNode) op)
+                       => new NotNode(result, new UnaryNode(((UnaryNode)op.Item2).Value, false), op.Item1);
 
-                    // unary
-                    var result = node.Item1;
+                   static OrNode CreateOrNode(OperatorNode result, (string, OperatorNode) op)
+                       => new OrNode(result, op.Item2, op.Item1);
 
-                    foreach (var op in node.Item2)
-                    {
-                        result = op.Item1 switch
-                        {
-                            "NOT" => CreateNotNode(result, op),
-                            "!" => CreateNotNode(result, op),
-                            "OR" => CreateOrNode(result, op),
-                            "||" => CreateOrNode(result, op),
-                            " " => CreateOrNode(result, op),
-                            _ => null
-                        };
-                    }
+                   // unary
+                   var result = node.Item1;
+
+                   foreach (var op in node.Item2)
+                   {
+                       result = op.Item1 switch
+                       {
+                           "NOT" => CreateNotNode(result, op),
+                           "!" => CreateNotNode(result, op),
+                           "OR" => CreateOrNode(result, op),
+                           "||" => CreateOrNode(result, op),
+                           " " => CreateOrNode(result, op),
+                           _ => null
+                       };
+                   }
 
                    return result;
                });
@@ -108,15 +107,29 @@ namespace YesSql.Core.QueryParser.Builders
 
         }
 
-        public BooleanParserBuilder(
-            string name, 
-            Func<string, IQuery<T>, FilterExecutionContext<IQuery<T>>, ValueTask<IQuery<T>>> matchQuery,
-            Func<string, IQuery<T>, FilterExecutionContext<IQuery<T>>, ValueTask<IQuery<T>>> notMatchQuery) : this()
-        {
-            _termOption = new TermOption<T>(name, new QueryTermQueryOption<T>(matchQuery, notMatchQuery));
-        }
-
-        public override (Parser<OperatorNode> Parser, TermOption<T> TermOption) Build()
+        public override (Parser<OperatorNode> Parser, TTermOption TermOption) Build()
             => (_parser, _termOption);
+    }
+
+    public class QueryBooleanEngineBuilder<T> : BooleanEngineBuilder<T, QueryTermOption<T>> where T : class
+    {
+        public QueryBooleanEngineBuilder(
+            string name,
+            Func<string, IQuery<T>, QueryExecutionContext<T>, ValueTask<IQuery<T>>> matchQuery,
+            Func<string, IQuery<T>, QueryExecutionContext<T>, ValueTask<IQuery<T>>> notMatchQuery)
+        {
+            _termOption = new QueryTermOption<T>(name, matchQuery, notMatchQuery);
+        }
+    }
+
+    public class DocumentBooleanEngineBuilder<T> : BooleanEngineBuilder<T, EnumerableTermOption<T>> where T : class
+    {
+        public DocumentBooleanEngineBuilder(
+            string name,
+            Func<string, T, EnumerableExecutionContext<T>, ValueTask<T>> matchQuery,
+            Func<string, T, EnumerableExecutionContext<T>, ValueTask<T>> notMatchQuery)
+        {
+            _termOption = new EnumerableTermOption<T>(name, matchQuery, notMatchQuery);
+        }
     }
 }

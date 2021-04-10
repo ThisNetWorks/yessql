@@ -3,16 +3,16 @@ using Parlot.Fluent;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using YesSql.Core.QueryParser;
-using YesSql.Core.QueryParser.Builders;
+using YesSql.Core.FilterEngines;
+using YesSql.Core.FilterEngines.Builders;
 
 namespace YesSql.Search.ModelBinding
 {
     public class TermModelBinder<T> : IModelBinder where T : class
     {
-        private readonly IQueryParser<T> _parser;
+        private readonly IQueryEngine<T> _parser;
 
-        public TermModelBinder(IQueryParser<T> parser)
+        public TermModelBinder(IQueryEngine<T> parser)
         {
             _parser = parser;
         }
