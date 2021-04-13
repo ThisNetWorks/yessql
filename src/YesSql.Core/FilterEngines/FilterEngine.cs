@@ -32,17 +32,6 @@ namespace YesSql.Core.FilterEngines
             }
         }
 
-        public void MapFrom<TModel>(TModel model)
-        {
-            foreach (var option in _termOptions)
-            {
-                if (option.Value.MapFrom is Action<FilterEngine<T, TTermOption>, string, TermOption, TModel> mappingMethod)
-                {
-                    mappingMethod(this, option.Key, option.Value, model);
-                }
-            }
-        }
-
         public void MapTo<TModel>(TModel model)
         {
             foreach (var term in _terms.Values)
@@ -118,6 +107,17 @@ namespace YesSql.Core.FilterEngines
         public QueryFilterEngine(List<TermNode> terms, IReadOnlyDictionary<string, QueryTermOption<T>> termOptions) : base(terms, termOptions)
         { }
 
+        public void MapFrom<TModel>(TModel model)
+        {
+            foreach (var option in _termOptions)
+            {
+                if (option.Value.MapFrom is Action<QueryFilterEngine<T>, string, TermOption, TModel> mappingMethod)
+                {
+                    mappingMethod(this, option.Key, option.Value, model);
+                }
+            }
+        }
+
         public async ValueTask<IQuery<T>> ExecuteAsync(IQuery<T> query, IServiceProvider serviceProvider) //TODO if queryexecutioncontext provided, use that.
         {
             var context = new QueryExecutionContext<T>(query, serviceProvider);
@@ -147,6 +147,17 @@ namespace YesSql.Core.FilterEngines
 
         public EnumerableFilterEngine(List<TermNode> terms, IReadOnlyDictionary<string, EnumerableTermOption<T>> termOptions) : base(terms, termOptions)
         { }
+        
+        public void MapFrom<TModel>(TModel model)
+        {
+            foreach (var option in _termOptions)
+            {
+                if (option.Value.MapFrom is Action<EnumerableFilterEngine<T>, string, TermOption, TModel> mappingMethod)
+                {
+                    mappingMethod(this, option.Key, option.Value, model);
+                }
+            }
+        }
 
         public async ValueTask<IEnumerable<T>> ExecuteAsync(IEnumerable<T> source, IServiceProvider serviceProvider) //TODO if queryexecutioncontext provided, use that.
         {

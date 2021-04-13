@@ -123,9 +123,9 @@ namespace YesSql.Core.FilterEngines.Builders
         }
     }
 
-    public class DocumentBooleanEngineBuilder<T> : BooleanEngineBuilder<T, EnumerableTermOption<T>> 
+    public class EnumerableBooleanEngineBuilder<T> : BooleanEngineBuilder<T, EnumerableTermOption<T>> 
     {
-        public DocumentBooleanEngineBuilder(
+        public EnumerableBooleanEngineBuilder(
             string name,
             Func<string, IEnumerable<T>, EnumerableExecutionContext<T>, ValueTask<IEnumerable<T>>> matchQuery,
             Func<string, IEnumerable<T>, EnumerableExecutionContext<T>, ValueTask<IEnumerable<T>>> notMatchQuery)
