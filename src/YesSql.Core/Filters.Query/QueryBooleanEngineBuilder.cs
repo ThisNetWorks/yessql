@@ -1,10 +1,7 @@
 using System;
 using System.Threading.Tasks;
-using static Parlot.Fluent.Parsers;
-using Parlot.Fluent;
-using System.Collections.Generic;
 using YesSql;
-using OrchardCore.Filters.Builders;
+using OrchardCore.Filters.Abstractions.Builders;
 using OrchardCore.Filters.Query.Services;
 
 namespace OrchardCore.Filters.Query

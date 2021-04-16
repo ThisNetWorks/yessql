@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using OrchardCore.Filters.Builders;
+using OrchardCore.Filters.Abstractions.Builders;
+using OrchardCore.Filters.Abstractions.Nodes;
+using OrchardCore.Filters.Abstractions.Services;
 using OrchardCore.Filters.Enumerable.Services;
-using OrchardCore.Filters.Nodes;
-using OrchardCore.Filters.Services;
 
 namespace OrchardCore.Filters.Enumerable
 {

@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
-using OrchardCore.Filters.Nodes;
+using OrchardCore.Filters.Abstractions.Nodes;
 using Parlot;
 using Parlot.Fluent;
 using static Parlot.Fluent.Parsers;
 
-namespace OrchardCore.Filters.Services
+namespace OrchardCore.Filters.Abstractions.Services
 {
     // TODO this as a abstract class is not that useful.
     // IFilterEngine.

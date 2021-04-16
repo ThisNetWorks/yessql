@@ -1,9 +1,9 @@
-using OrchardCore.Filters.Nodes;
-using OrchardCore.Filters.Services;
+using OrchardCore.Filters.Abstractions.Nodes;
+using OrchardCore.Filters.Abstractions.Services;
 using Parlot.Fluent;
 using static Parlot.Fluent.Parsers;
 
-namespace OrchardCore.Filters.Builders
+namespace OrchardCore.Filters.Abstractions.Builders
 {
     public class DefaultTermEngineBuilder<T, TTermOption> : TermEngineBuilder<T, TTermOption> where T : class where TTermOption : TermOption
     {

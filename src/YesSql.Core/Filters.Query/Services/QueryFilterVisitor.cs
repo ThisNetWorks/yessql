@@ -1,8 +1,8 @@
-using OrchardCore.Filters.Nodes;
-using OrchardCore.Filters.Services;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using OrchardCore.Filters.Abstractions.Nodes;
+using OrchardCore.Filters.Abstractions.Services;
 using YesSql;
 
 namespace OrchardCore.Filters.Query.Services
@@ -17,18 +17,15 @@ namespace OrchardCore.Filters.Query.Services
             var predicates = new List<Func<IQuery<T>, ValueTask<IQuery<T>>>>();
             foreach (var child in node.Children)
             {
-                // Func<IQuery<T>, ValueTask<IQuery<T>>> d = (q) => child.Operation.Accept(this, argument)(q);
-
                 Func<IQuery<T>, ValueTask<IQuery<T>>> predicate = (q) => argument.Item.AllAsync(
                     (q) => child.Operation.Accept(this, argument)(q)
                 );
                 predicates.Add(predicate);
-
             }
 
-            Func<IQuery<T>, Task<IQuery<T>>> result = (Func<IQuery<T>, Task<IQuery<T>>>)Delegate.Combine(predicates.ToArray());
+            Func<IQuery<T>, ValueTask<IQuery<T>>> result = (Func<IQuery<T>, ValueTask<IQuery<T>>>)Delegate.Combine(predicates.ToArray());
 
-            return xyz => new ValueTask<IQuery<T>>(result(argument.Item));
+            return result;
         }
 
         public Func<IQuery<T>, ValueTask<IQuery<T>>> Visit(UnaryNode node, QueryExecutionContext<T> argument)

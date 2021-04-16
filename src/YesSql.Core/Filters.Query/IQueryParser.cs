@@ -1,5 +1,5 @@
+using OrchardCore.Filters.Abstractions.Services;
 using OrchardCore.Filters.Query.Services;
-using OrchardCore.Filters.Services;
 
 namespace OrchardCore.Filters.Query
 {

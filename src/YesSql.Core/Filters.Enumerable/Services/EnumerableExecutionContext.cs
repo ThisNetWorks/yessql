@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using OrchardCore.Filters.Services;
+using OrchardCore.Filters.Abstractions.Services;
 
 namespace OrchardCore.Filters.Enumerable.Services
 {

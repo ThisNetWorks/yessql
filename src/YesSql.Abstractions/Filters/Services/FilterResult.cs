@@ -1,11 +1,10 @@
-using OrchardCore.Filters.Nodes;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
+using OrchardCore.Filters.Abstractions.Nodes;
 
-namespace OrchardCore.Filters.Services
+namespace OrchardCore.Filters.Abstractions.Services
 {
     public abstract class FilterResult<T, TTermOption> : IEnumerable<TermNode> where TTermOption : TermOption
     {

@@ -1,6 +1,6 @@
-using OrchardCore.Filters.Services;
+using OrchardCore.Filters.Abstractions.Services;
 
-namespace OrchardCore.Filters.Nodes
+namespace OrchardCore.Filters.Abstractions.Nodes
 {
     public abstract class FilterNode
     {

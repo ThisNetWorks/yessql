@@ -1,12 +1,10 @@
-using System;
-using System.Threading.Tasks;
-using static Parlot.Fluent.Parsers;
-using Parlot.Fluent;
-using System.Collections.Generic;
-using OrchardCore.Filters.Nodes;
-using OrchardCore.Filters.Services;
 
-namespace OrchardCore.Filters.Builders
+using OrchardCore.Filters.Abstractions.Nodes;
+using OrchardCore.Filters.Abstractions.Services;
+using Parlot.Fluent;
+using static Parlot.Fluent.Parsers;
+
+namespace OrchardCore.Filters.Abstractions.Builders
 {
     public abstract class BooleanEngineBuilder<T, TTermOption> : OperatorEngineBuilder<T, TTermOption> where TTermOption : TermOption
     {

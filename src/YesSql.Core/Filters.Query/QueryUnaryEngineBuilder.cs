@@ -1,9 +1,9 @@
-using OrchardCore.Filters.Builders;
-using OrchardCore.Filters.Nodes;
-using OrchardCore.Filters.Query.Services;
-using OrchardCore.Filters.Services;
 using System;
 using System.Threading.Tasks;
+using OrchardCore.Filters.Abstractions.Builders;
+using OrchardCore.Filters.Abstractions.Nodes;
+using OrchardCore.Filters.Abstractions.Services;
+using OrchardCore.Filters.Query.Services;
 using YesSql;
 
 namespace OrchardCore.Filters.Query

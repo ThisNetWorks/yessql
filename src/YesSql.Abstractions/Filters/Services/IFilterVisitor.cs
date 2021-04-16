@@ -1,6 +1,6 @@
-using OrchardCore.Filters.Nodes;
+using OrchardCore.Filters.Abstractions.Nodes;
 
-namespace OrchardCore.Filters.Services
+namespace OrchardCore.Filters.Abstractions.Services
 {
     public interface IFilterVisitor<TArgument, TResult>
     {

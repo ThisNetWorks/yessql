@@ -1,6 +1,5 @@
-using OrchardCore.Filters.Services;
 using System;
-using System.Collections.Generic;
+using OrchardCore.Filters.Abstractions.Services;
 using YesSql;
 
 namespace OrchardCore.Filters.Query.Services

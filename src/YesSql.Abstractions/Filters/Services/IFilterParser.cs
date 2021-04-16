@@ -1,4 +1,4 @@
-namespace OrchardCore.Filters.Services
+namespace OrchardCore.Filters.Abstractions.Services
 {
     public interface IFilterParser<TResult>
     {

@@ -1,12 +1,9 @@
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using OrchardCore.Filters.Nodes;
-using OrchardCore.Filters.Services;
+using OrchardCore.Filters.Abstractions.Nodes;
+using OrchardCore.Filters.Abstractions.Services;
 using Parlot.Fluent;
 using static Parlot.Fluent.Parsers;
 
-namespace OrchardCore.Filters.Builders
+namespace OrchardCore.Filters.Abstractions.Builders
 {
     public abstract class UnaryEngineBuilder<T, TTermOption> : OperatorEngineBuilder<T, TTermOption> where TTermOption : TermOption
     {

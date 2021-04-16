@@ -1,7 +1,6 @@
 using System;
-using System.Collections.Generic;
 
-namespace OrchardCore.Filters.Services
+namespace OrchardCore.Filters.Abstractions.Services
 {
     public class FilterExecutionContext<T>
     {

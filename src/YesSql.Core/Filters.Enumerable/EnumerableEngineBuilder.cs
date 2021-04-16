@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using OrchardCore.Filters.Builders;
+using OrchardCore.Filters.Abstractions.Builders;
 using OrchardCore.Filters.Enumerable.Services;
 
 namespace OrchardCore.Filters.Enumerable

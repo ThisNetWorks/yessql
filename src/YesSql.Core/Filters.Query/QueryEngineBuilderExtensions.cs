@@ -1,6 +1,6 @@
-using OrchardCore.Filters.Builders;
-using OrchardCore.Filters.Query.Services;
 using System;
+using OrchardCore.Filters.Abstractions.Builders;
+using OrchardCore.Filters.Query.Services;
 
 namespace OrchardCore.Filters.Query
 {

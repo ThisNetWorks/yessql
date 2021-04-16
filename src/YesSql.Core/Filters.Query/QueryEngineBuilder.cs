@@ -1,8 +1,7 @@
-using OrchardCore.Filters.Builders;
-using OrchardCore.Filters.Query.Services;
-using System;
 using System.Collections.Generic;
 using System.Linq;
+using OrchardCore.Filters.Abstractions.Builders;
+using OrchardCore.Filters.Query.Services;
 
 namespace OrchardCore.Filters.Query
 {
