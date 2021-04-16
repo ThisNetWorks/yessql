@@ -1,122 +1,122 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using YesSql.Core.FilterEngines.Visitors;
+// using System;
+// using System.Collections.Generic;
+// using System.Linq;
+// using System.Threading.Tasks;
+// using YesSql.Core.FilterEngines.Visitors;
 
-namespace YesSql.Core.FilterEngines
-{
-    public abstract class FilterNode
-    {
-        public abstract string ToNormalizedString();
+// namespace YesSql.Core.FilterEngines
+// {
+//     public abstract class FilterNode
+//     {
+//         public abstract string ToNormalizedString();
 
-        public abstract TResult Accept<TArgument, TResult>(IFilterVisitor<TArgument, TResult> visitor, TArgument argument);
-    }
+//         public abstract TResult Accept<TArgument, TResult>(IFilterVisitor<TArgument, TResult> visitor, TArgument argument);
+//     }
 
-    public abstract class TermNode : FilterNode
-    {
-        public TermNode(string termName)
-        {
-            TermName = termName;
-        }
+//     public abstract class TermNode : FilterNode
+//     {
+//         public TermNode(string termName)
+//         {
+//             TermName = termName;
+//         }
 
-        public string TermName { get; }
-        public override TResult Accept<TArgument, TResult>(IFilterVisitor<TArgument, TResult> visitor, TArgument argument)
-            => visitor.Visit(this, argument);
-    }
+//         public string TermName { get; }
+//         public override TResult Accept<TArgument, TResult>(IFilterVisitor<TArgument, TResult> visitor, TArgument argument)
+//             => visitor.Visit(this, argument);
+//     }
 
-    public abstract class TermOperationNode : TermNode
-    {
-        public TermOperationNode(string termName, OperatorNode operation) : base(termName)
-        {
-            Operation = operation;
-        }
+//     public abstract class TermOperationNode : TermNode
+//     {
+//         public TermOperationNode(string termName, OperatorNode operation) : base(termName)
+//         {
+//             Operation = operation;
+//         }
 
-        public OperatorNode Operation { get; }
+//         public OperatorNode Operation { get; }
 
-        // public override Func<IQuery<T>, ValueTask<IQuery<T>>> BuildAsync<T>(QueryExecutionContext<T> context)
-        //     => Operation.BuildAsync(context); 
-
-
-        public override TResult Accept<TArgument, TResult>(IFilterVisitor<TArgument, TResult> visitor, TArgument argument)
-            => visitor.Visit(this, argument);
-
-        // public override Func<T, ValueTask<T>> BuildDocumentAsync<T>(FilterExecutionContext<T> context)
-        //     => Operation.BuildDocumentAsync(context);                          
-    }
-
-    public class NamedTermNode : TermOperationNode
-    {
-        public NamedTermNode(string termName, OperatorNode operation) : base(termName, operation)
-        {
-        }
-
-        public override string ToNormalizedString()
-            => $"{TermName}:{Operation.ToNormalizedString()}";
-
-        public override string ToString()
-            => $"{TermName}:{Operation.ToString()}";
-    }
+//         // public override Func<IQuery<T>, ValueTask<IQuery<T>>> BuildAsync<T>(QueryExecutionContext<T> context)
+//         //     => Operation.BuildAsync(context); 
 
 
-    public class DefaultTermNode : TermOperationNode
-    {
-        public DefaultTermNode(string termName, OperatorNode operation) : base(termName, operation)
-        {
-        }
+//         public override TResult Accept<TArgument, TResult>(IFilterVisitor<TArgument, TResult> visitor, TArgument argument)
+//             => visitor.Visit(this, argument);
 
-        public override string ToNormalizedString() // normalizing includes the term name even if not specified.
-            => $"{TermName}:{Operation.ToNormalizedString()}";
+//         // public override Func<T, ValueTask<T>> BuildDocumentAsync<T>(FilterExecutionContext<T> context)
+//         //     => Operation.BuildDocumentAsync(context);                          
+//     }
 
-        public override string ToString()
-            => $"{Operation.ToString()}";
-    }
+//     public class NamedTermNode : TermOperationNode
+//     {
+//         public NamedTermNode(string termName, OperatorNode operation) : base(termName, operation)
+//         {
+//         }
 
-    public abstract class CompoundTermNode : TermNode
-    {
-        public CompoundTermNode(string termName) : base(termName)
-        {
-        }
+//         public override string ToNormalizedString()
+//             => $"{TermName}:{Operation.ToNormalizedString()}";
 
-        public List<TermOperationNode> Children { get; } = new();
-    }
-
-    public class AndTermNode : CompoundTermNode
-    {
-        public AndTermNode(TermOperationNode existingTerm, TermOperationNode newTerm) : base(existingTerm.TermName)
-        {
-            Children.Add(existingTerm);
-            Children.Add(newTerm);
-        }
-
-        public override TResult Accept<TArgument, TResult>(IFilterVisitor<TArgument, TResult> visitor, TArgument argument)
-            => visitor.Visit(this, argument);
-
-        // TODO this works, but really need to test it against taxonomies to see if the logic is correct.
-        // public override Func<IQuery<T>, ValueTask<IQuery<T>>> BuildAsync<T>(QueryExecutionContext<T> context)
-        // {
-        //     var predicates = new List<Func<IQuery<T>, Task<IQuery<T>>>>();
-        //     foreach (var child in Children)
-        //     {
-        //         // Func<IQuery<T>, Task<IQuery<T>>> c = (q) => child.Operation.BuildAsync(context)(q).AsTask();
-
-        //         Func<IQuery<T>, Task<IQuery<T>>> predicate = (q) => context.Item.AllAsync(
-        //             (q) => child.Operation.BuildAsync(context)(q).AsTask()
-        //         );
-        //         predicates.Add(predicate);
-
-        //     }
-
-        //     Func<IQuery<T>, Task<IQuery<T>>> result = (Func<IQuery<T>, Task<IQuery<T>>>)Delegate.Combine(predicates.ToArray());
-
-        //     return xyz => new ValueTask<IQuery<T>>(result(context.Item));
-        // }
+//         public override string ToString()
+//             => $"{TermName}:{Operation.ToString()}";
+//     }
 
 
-        public override string ToNormalizedString()
-            => string.Join(" ", Children.Select(c => c.ToNormalizedString()));
+//     public class DefaultTermNode : TermOperationNode
+//     {
+//         public DefaultTermNode(string termName, OperatorNode operation) : base(termName, operation)
+//         {
+//         }
 
-        public override string ToString()
-            => string.Join(" ", Children.Select(c => c.ToString()));
-    }
-}
+//         public override string ToNormalizedString() // normalizing includes the term name even if not specified.
+//             => $"{TermName}:{Operation.ToNormalizedString()}";
+
+//         public override string ToString()
+//             => $"{Operation.ToString()}";
+//     }
+
+//     public abstract class CompoundTermNode : TermNode
+//     {
+//         public CompoundTermNode(string termName) : base(termName)
+//         {
+//         }
+
+//         public List<TermOperationNode> Children { get; } = new();
+//     }
+
+//     public class AndTermNode : CompoundTermNode
+//     {
+//         public AndTermNode(TermOperationNode existingTerm, TermOperationNode newTerm) : base(existingTerm.TermName)
+//         {
+//             Children.Add(existingTerm);
+//             Children.Add(newTerm);
+//         }
+
+//         public override TResult Accept<TArgument, TResult>(IFilterVisitor<TArgument, TResult> visitor, TArgument argument)
+//             => visitor.Visit(this, argument);
+
+//         // TODO this works, but really need to test it against taxonomies to see if the logic is correct.
+//         // public override Func<IQuery<T>, ValueTask<IQuery<T>>> BuildAsync<T>(QueryExecutionContext<T> context)
+//         // {
+//         //     var predicates = new List<Func<IQuery<T>, Task<IQuery<T>>>>();
+//         //     foreach (var child in Children)
+//         //     {
+//         //         // Func<IQuery<T>, Task<IQuery<T>>> c = (q) => child.Operation.BuildAsync(context)(q).AsTask();
+
+//         //         Func<IQuery<T>, Task<IQuery<T>>> predicate = (q) => context.Item.AllAsync(
+//         //             (q) => child.Operation.BuildAsync(context)(q).AsTask()
+//         //         );
+//         //         predicates.Add(predicate);
+
+//         //     }
+
+//         //     Func<IQuery<T>, Task<IQuery<T>>> result = (Func<IQuery<T>, Task<IQuery<T>>>)Delegate.Combine(predicates.ToArray());
+
+//         //     return xyz => new ValueTask<IQuery<T>>(result(context.Item));
+//         // }
+
+
+//         public override string ToNormalizedString()
+//             => string.Join(" ", Children.Select(c => c.ToNormalizedString()));
+
+//         public override string ToString()
+//             => string.Join(" ", Children.Select(c => c.ToString()));
+//     }
+// }

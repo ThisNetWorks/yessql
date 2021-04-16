@@ -1,4 +1,6 @@
 using Dapper;
+using OrchardCore.Filters.Enumerable;
+using OrchardCore.Filters.Query;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -10,7 +12,6 @@ using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
 using YesSql.Commands;
-using YesSql.Core.FilterEngines.Builders;
 using YesSql.Indexes;
 using YesSql.Services;
 using YesSql.Sql;
@@ -6577,9 +6578,9 @@ namespace YesSql.Tests
                 )
                 .Build();
 
-            var filterEngine = engine.Parse(search);
+            var filterResult = engine.Parse(search);
 
-            var articles = await filterEngine.ExecuteAsync(document.Articles, null);
+            var articles = await filterResult.ExecuteAsync(document.Articles, null);
 
             // Normal linq query. might use key might use value.
             Assert.Equal("Post by steve about cats", document.Articles.Where(x => x.Value.Title.Contains("Steve", StringComparison.OrdinalIgnoreCase)).FirstOrDefault().Value.Title);

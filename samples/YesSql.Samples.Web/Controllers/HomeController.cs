@@ -10,8 +10,8 @@ using YesSql.Samples.Web.ViewModels;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using YesSql.Search;
 using YesSql.Search.ModelBinding;
-using YesSql.Core.FilterEngines;
 using System.Linq;
+using OrchardCore.Filters.Query.Services;
 
 namespace YesSql.Samples.Web.Controllers
 {
@@ -26,7 +26,7 @@ namespace YesSql.Samples.Web.Controllers
         }
 
         [Route("/")]
-        public async Task<IActionResult> Index([ModelBinder(BinderType = typeof(TermModelBinder<BlogPost>), Name = "q")] QueryFilterEngine<BlogPost> termList)
+        public async Task<IActionResult> Index([ModelBinder(BinderType = typeof(QueryFilterEngineModelBinder<BlogPost>), Name = "q")] QueryFilterResult<BlogPost> termList)
         {
             IEnumerable<BlogPost> posts;
 
@@ -93,36 +93,6 @@ namespace YesSql.Samples.Web.Controllers
                       }
                   );
             }
-
-            // Not a dictionary because it may contain duplicates.
-            /*
-
-            var searchValues = search.TermList.Terms.Select(x => new { name = x.TermName, value = x.ToString() }).ToList();
-
-            if (search.SelectedFilter != ContentsStatus.Default)
-            {
-                var existingStatusIndex = searchValues.FindIndex(x => x.name == "status");
-                if (existingStatusIndex != -1)
-                {
-                    searchValues.RemoveAt(existingStatusIndex);
-                }
-                // Here what happens is it needs to replace the existing status value in the string.
-                if (existingStatusIndex == -1)
-                {
-                    existingStatusIndex = searchValues.Count();
-                }
-                
-                searchValues.Insert(existingStatusIndex, new { name = "status", value = "status:" + search.SelectedFilter.ToString().ToLowerInvariant()});                
-            }
-
-
-            return RedirectToAction("Index",
-                       new RouteValueDictionary
-                       {
-                            { "q", string.Join(' ', searchValues.Select(x => x.value)) }
-                       }
-                   );
-                */
 
             search.TermList.MapFrom(search);
 

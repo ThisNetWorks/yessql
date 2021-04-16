@@ -1,22 +1,16 @@
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using OrchardCore.Filters.Query;
+using OrchardCore.Filters.Query.Services;
 using Parlot.Fluent;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using YesSql.Core.FilterEngines;
-using YesSql.Core.FilterEngines.Builders;
 
 namespace YesSql.Search.ModelBinding
 {
-    public class TermModelBinder<T> : IModelBinder where T : class
+    public abstract class FilterEngineModelBinder<TResult> : IModelBinder
     {
-        private readonly IQueryEngine<T> _parser;
-
-        public TermModelBinder(IQueryEngine<T> parser)
-        {
-            _parser = parser;
-        }
-       
+        public abstract TResult Parse(string text);
 
         public Task BindModelAsync(ModelBindingContext bindingContext)
         {
@@ -32,7 +26,7 @@ namespace YesSql.Search.ModelBinding
 
             if (valueProviderResult == ValueProviderResult.None)
             {
-                bindingContext.Result = ModelBindingResult.Success(_parser.Parse(String.Empty));
+                bindingContext.Result = ModelBindingResult.Success(Parse(String.Empty));
 
                 return Task.CompletedTask;
             }
@@ -44,14 +38,14 @@ namespace YesSql.Search.ModelBinding
             // Check if the argument value is null or empty
             if (string.IsNullOrEmpty(value))
             {
-                bindingContext.Result = ModelBindingResult.Success(_parser.Parse(String.Empty));
+                bindingContext.Result = ModelBindingResult.Success(Parse(String.Empty));
                 
                 return Task.CompletedTask;
             }
 
-            var termList = _parser.Parse(value);
+            var filterResult = Parse(value);
 
-            bindingContext.Result = ModelBindingResult.Success(termList);
+            bindingContext.Result = ModelBindingResult.Success(filterResult);
             
             return Task.CompletedTask;
         }

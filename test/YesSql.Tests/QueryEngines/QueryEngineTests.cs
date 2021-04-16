@@ -1,8 +1,8 @@
+using OrchardCore.Filters.Query;
 using Parlot.Fluent;
 using System;
 using System.Linq;
 using Xunit;
-using YesSql.Core.FilterEngines.Builders;
 using YesSql.Services;
 using YesSql.Tests.Indexes;
 using YesSql.Tests.Models;
