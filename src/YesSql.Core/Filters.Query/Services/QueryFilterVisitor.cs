@@ -14,13 +14,13 @@ namespace OrchardCore.Filters.Query.Services
 
         public Func<IQuery<T>, ValueTask<IQuery<T>>> Visit(AndTermNode node, QueryExecutionContext<T> argument)
         {
-            var predicates = new List<Func<IQuery<T>, Task<IQuery<T>>>>();
+            var predicates = new List<Func<IQuery<T>, ValueTask<IQuery<T>>>>();
             foreach (var child in node.Children)
             {
-                // Func<IQuery<T>, Task<IQuery<T>>> c = (q) => child.Operation.BuildAsync(context)(q).AsTask();
+                // Func<IQuery<T>, ValueTask<IQuery<T>>> d = (q) => child.Operation.Accept(this, argument)(q);
 
-                Func<IQuery<T>, Task<IQuery<T>>> predicate = (q) => argument.Item.AllAsync(
-                    (q) => child.Operation.Accept(this, argument)(q).AsTask()
+                Func<IQuery<T>, ValueTask<IQuery<T>>> predicate = (q) => argument.Item.AllAsync(
+                    (q) => child.Operation.Accept(this, argument)(q)
                 );
                 predicates.Add(predicate);
 
@@ -44,25 +44,25 @@ namespace OrchardCore.Filters.Query.Services
 
         public Func<IQuery<T>, ValueTask<IQuery<T>>> Visit(NotUnaryNode node, QueryExecutionContext<T> argument)
         {
-            return result => new ValueTask<IQuery<T>>(argument.Item.AllAsync(
-                 (q) => node.Operation.Accept(this, argument)(q).AsTask()
-            ));
+            return result => argument.Item.AllAsync(
+                 (q) => node.Operation.Accept(this, argument)(q)
+            );
         }
 
         public Func<IQuery<T>, ValueTask<IQuery<T>>> Visit(OrNode node, QueryExecutionContext<T> argument)
         {
-            return result => new ValueTask<IQuery<T>>(argument.Item.AnyAsync(
-                (q) => node.Left.Accept(this, argument)(q).AsTask(),
-                (q) => node.Right.Accept(this, argument)(q).AsTask()
-            ));
+            return result => argument.Item.AnyAsync(
+                (q) => node.Left.Accept(this, argument)(q),
+                (q) => node.Right.Accept(this, argument)(q)
+            );            
         }
 
         public Func<IQuery<T>, ValueTask<IQuery<T>>> Visit(AndNode node, QueryExecutionContext<T> argument)
         {
-            return result => new ValueTask<IQuery<T>>(argument.Item.AllAsync(
-                (q) => node.Left.Accept(this, argument)(q).AsTask(),
-                (q) => node.Right.Accept(this, argument)(q).AsTask()
-            ));
+            return result => argument.Item.AllAsync(
+                (q) => node.Left.Accept(this, argument)(q),
+                (q) => node.Right.Accept(this, argument)(q)
+            );            
         }
 
         public Func<IQuery<T>, ValueTask<IQuery<T>>> Visit(GroupNode node, QueryExecutionContext<T> argument)
