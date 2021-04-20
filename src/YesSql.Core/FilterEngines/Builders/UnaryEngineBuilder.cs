@@ -64,6 +64,10 @@ namespace YesSql.Core.FilterEngines.Builders
                     var node = termOption.MapFromFactory(name, mapResult.value);
                     terms.TryAddOrReplace(node);
                 }
+                else
+                {
+                    terms.TryRemove(name);
+                }
             };
 
             _termOption.MapFrom = mapFrom;

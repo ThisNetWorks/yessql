@@ -51,7 +51,7 @@ namespace YesSql.Samples.Web.Controllers
                     OriginalSearchText = currentSearchText,
                     Filters = new List<SelectListItem>()
                     {
-                        new SelectListItem("Select...", ""),
+                        new SelectListItem("Default...", ContentsStatus.Default.ToString()),
                         new SelectListItem("Published", ContentsStatus.Published.ToString()),
                         new SelectListItem("Draft", ContentsStatus.Draft.ToString())
                     }
@@ -93,36 +93,6 @@ namespace YesSql.Samples.Web.Controllers
                       }
                   );
             }
-
-            // Not a dictionary because it may contain duplicates.
-            /*
-
-            var searchValues = search.TermList.Terms.Select(x => new { name = x.TermName, value = x.ToString() }).ToList();
-
-            if (search.SelectedFilter != ContentsStatus.Default)
-            {
-                var existingStatusIndex = searchValues.FindIndex(x => x.name == "status");
-                if (existingStatusIndex != -1)
-                {
-                    searchValues.RemoveAt(existingStatusIndex);
-                }
-                // Here what happens is it needs to replace the existing status value in the string.
-                if (existingStatusIndex == -1)
-                {
-                    existingStatusIndex = searchValues.Count();
-                }
-                
-                searchValues.Insert(existingStatusIndex, new { name = "status", value = "status:" + search.SelectedFilter.ToString().ToLowerInvariant()});                
-            }
-
-
-            return RedirectToAction("Index",
-                       new RouteValueDictionary
-                       {
-                            { "q", string.Join(' ', searchValues.Select(x => x.value)) }
-                       }
-                   );
-                */
 
             search.TermList.MapFrom(search);
 

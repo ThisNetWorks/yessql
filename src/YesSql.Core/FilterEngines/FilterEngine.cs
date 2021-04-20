@@ -91,6 +91,9 @@ namespace YesSql.Core.FilterEngines
             return true;
         }
 
+        public bool TryRemove(string name)
+            => _terms.Remove(name);
+
         public IEnumerator<TermNode> GetEnumerator()
             => _terms.Values.GetEnumerator();
 
