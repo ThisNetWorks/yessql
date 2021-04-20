@@ -10,8 +10,8 @@ using YesSql.Samples.Web.ViewModels;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using YesSql.Search;
 using YesSql.Search.ModelBinding;
-using YesSql.Core.FilterEngines;
 using System.Linq;
+using OrchardCore.Filters.Query.Services;
 
 namespace YesSql.Samples.Web.Controllers
 {
@@ -26,7 +26,7 @@ namespace YesSql.Samples.Web.Controllers
         }
 
         [Route("/")]
-        public async Task<IActionResult> Index([ModelBinder(BinderType = typeof(TermModelBinder<BlogPost>), Name = "q")] QueryFilterEngine<BlogPost> termList)
+        public async Task<IActionResult> Index([ModelBinder(BinderType = typeof(QueryFilterEngineModelBinder<BlogPost>), Name = "q")] QueryFilterResult<BlogPost> termList)
         {
             IEnumerable<BlogPost> posts;
 

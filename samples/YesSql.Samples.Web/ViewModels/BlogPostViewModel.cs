@@ -8,8 +8,8 @@ using Microsoft.AspNetCore.Routing;
 using System;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using YesSql.Core.FilterEngines;
 using YesSql.Search.ModelBinding;
+using OrchardCore.Filters.Query.Services;
 
 namespace YesSql.Samples.Web.ViewModels
 {
@@ -26,8 +26,8 @@ namespace YesSql.Samples.Web.ViewModels
         public string OriginalSearchText { get; set; }
         public ContentsStatus SelectedFilter { get; set; }
 
-        [ModelBinder(BinderType = typeof(TermModelBinder<BlogPost>), Name = "SearchText")]
-        public QueryFilterEngine<BlogPost> TermList { get; set; }
+        [ModelBinder(BinderType = typeof(QueryFilterEngineModelBinder<BlogPost>), Name = "SearchText")]
+        public QueryFilterResult<BlogPost> TermList { get; set; }
 
         [BindNever]
         public List<SelectListItem> Filters { get; set; } = new();

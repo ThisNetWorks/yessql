@@ -4,7 +4,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
 using System.IO;
-using YesSql.Core.FilterEngines;
 using YesSql.Provider.Sqlite;
 using YesSql.Samples.Web.Indexes;
 using YesSql.Samples.Web.Models;
@@ -12,7 +11,8 @@ using YesSql.Search;
 using YesSql.Sql;
 using YesSql.Services;
 using YesSql.Samples.Web.ViewModels;
-using YesSql.Core.FilterEngines.Builders;
+using OrchardCore.Filters.Query.Services;
+using OrchardCore.Filters.Query;
 
 namespace YesSql.Samples.Web
 {
@@ -32,7 +32,7 @@ namespace YesSql.Samples.Web
 
             services.AddMvc(options => options.EnableEndpointRouting = false);
 
-            services.AddSingleton<IQueryEngine<BlogPost>>(sp =>
+            services.AddSingleton<IQueryParser<BlogPost>>(sp =>
                 new QueryEngineBuilder<BlogPost>()
                     .WithNamedTerm("status", b => b
                         .OneCondition((val, query) =>
